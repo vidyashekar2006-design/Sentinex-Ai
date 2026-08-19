@@ -1,0 +1,48 @@
+[
+  {
+    "record": {
+      "source": "TradeIndia",
+      "title": null,
+      "company": null,
+      "supplier": null,
+      "product": null,
+      "event": null,
+      "location": null,
+      "price": null,
+      "currency": null,
+      "availability": null,
+      "rating": null,
+      "review": null,
+      "date": null,
+      "url": "https://www.tradeindia.com/products/",
+      "timestamp": "2026-08-19T12:58:46.914876+00:00"
+    },
+    "issues": [
+      "Missing or invalid title",
+      "Missing or invalid product"
+    ]
+  },
+  {
+    "record": {
+      "source": "TradeIndia",
+      "title": null,
+      "company": "Rite Solution",
+      "supplier": null,
+      "product": null,
+      "event": null,
+      "location": null,
+      "price": 10000000,
+      "currency": "INR",
+      "availability": "in_stock",
+      "rating": null,
+      "review": null,
+      "date": null,
+      "url": "https://www.tradeindia.com/products/bin-lifter-c9343015.html",
+      "timestamp": "2026-08-19T12:58:46.917302+00:00"
+    },
+    "issues": [
+      "Missing or invalid title",
+      "Missing or invalid product"
+    ]
+  }
+]
