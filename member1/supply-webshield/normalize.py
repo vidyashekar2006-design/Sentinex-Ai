@@ -20,17 +20,16 @@ def normalize_record(record, source):
     currency = None
 
     if isinstance(raw_price, dict):
-        price = raw_price.get("value")
-        currency = raw_price.get("currency")
+      price = raw_price.get("value")
+      currency = raw_price.get("currency")
 
     elif isinstance(raw_price, (int, float)):
-        price = raw_price
+       price = raw_price
+       currency = record.get("currency")
 
     elif isinstance(raw_price, str):
-        # Keep raw string for now.
-        # We will improve price parsing later.
-        price = raw_price
-
+      price = raw_price
+      currency = record.get("currency")
     # -----------------------------
     # RATING
     # -----------------------------

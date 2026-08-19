@@ -28,7 +28,7 @@ REJECTED_DIR.mkdir(parents=True, exist_ok=True)
 SOURCES = {
     "DeoDap": "deodap.json",
     "TradeIndia": "tradeindia.json",
-    "Moglix": "moglix.json"
+    "Meesho": "meesho.json"
 }
 
 

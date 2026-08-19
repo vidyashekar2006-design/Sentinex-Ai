@@ -430,29 +430,5 @@
     "median_source_price": 2565,
     "reason": "Price is more than 10x the source median",
     "url": "https://www.tradeindia.com/products/electric-muffle-furnace-c10550993.html"
-  },
-  {
-    "source": "Moglix",
-    "product": "PDB17008 1700W 16kg Heavy Duty Electric Demolition Breaker with Hex Chuck System, 2 Pcs Chisel & 45J Impact Force for Industrial Construction",
-    "price": 1533915339,
-    "median_source_price": 82598259.0,
-    "reason": "Price is more than 10x the source median",
-    "url": "https://www.moglix.com/ingco-1700w-demolition-breaker-pdb17008/mp/msnnkqg2nd6z9x"
-  },
-  {
-    "source": "Moglix",
-    "product": "M200-105 IGBT Inverter 2 in 1 Flux Core/Solid Wire MAG Welding Machine with 1 Year Warranty",
-    "price": 1373813738,
-    "median_source_price": 82598259.0,
-    "reason": "Price is more than 10x the source median",
-    "url": "https://www.moglix.com/ibell-m200-105-igbt-inverter-2-in-1-flux-core-solid-wire-mag-welding-machine-with-2-years-warranty/mp/msng9vn4p1edkp"
-  },
-  {
-    "source": "Moglix",
-    "product": "3HP 60 Litre Pressure Oil Type Air Compressor with Aluminium Winding Motor And 8 Bar Pressure, SP-D60",
-    "price": 1314413144,
-    "median_source_price": 82598259.0,
-    "reason": "Price is more than 10x the source median",
-    "url": "https://www.moglix.com/spear-3hp-8-bar-max-pressure-oil-type-air-compressor-with-aluminium-winding-motor-sp-d60/mp/msng9vnqg7g6kp"
   }
 ]

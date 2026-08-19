@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 KNOWN_SOURCES = {
     "deodap",
     "tradeindia",
-    "moglix"
+    "meesho"
 }
 
 
