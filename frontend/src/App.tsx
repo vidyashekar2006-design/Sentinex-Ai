@@ -9,7 +9,6 @@ import Alerts from "./components/Alerts";
 import WebShield from "./components/WebShield";
 import ScraperHealth from "./components/ScraperHealth";
 
-
 // =========================================================
 // TYPES
 // =========================================================
@@ -22,6 +21,11 @@ interface RiskData {
   market_anomaly: number;
   webshield_risk: number;
   alerts: string[];
+
+  records_processed?: number;
+  high_risk_records?: number;
+  medium_risk_records?: number;
+  low_risk_records?: number;
 }
 
 interface Supplier {
@@ -35,6 +39,7 @@ interface WebShieldData {
   price_anomalies: number;
   counterfeit_risks: number;
   supplier_web_alerts: number;
+  average_webshield_risk?: number;
 }
 
 interface ScraperData {
@@ -42,27 +47,47 @@ interface ScraperData {
   healthy: number;
   failed: number;
   self_healed: number;
+  records_processed?: number;
+  status?: string;
 }
 
-
 // =========================================================
-// API URL
+// API CONFIGURATION
+// =========================================================
+//
+// LOCAL:
+// VITE_API_BASE_URL=http://localhost:8000
+//
+// LIVE:
+// VITE_API_BASE_URL=https://your-backend-url.onrender.com
+//
 // =========================================================
 
-const API_BASE_URL = "http://localhost:8000";
-
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:8000";
 
 // =========================================================
 // APP
 // =========================================================
 
 function App() {
+  // =======================================================
+  // NAVIGATION
+  // =======================================================
 
-  const [activePage, setActivePage] = useState("Dashboard");
+  const [activePage, setActivePage] =
+    useState("Dashboard");
 
-  const [risk, setRisk] = useState<RiskData | null>(null);
+  // =======================================================
+  // API DATA
+  // =======================================================
 
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [risk, setRisk] =
+    useState<RiskData | null>(null);
+
+  const [suppliers, setSuppliers] =
+    useState<Supplier[]>([]);
 
   const [webshield, setWebshield] =
     useState<WebShieldData | null>(null);
@@ -70,156 +95,148 @@ function App() {
   const [scraper, setScraper] =
     useState<ScraperData | null>(null);
 
-  const [loading, setLoading] = useState(true);
+  // =======================================================
+  // UI STATE
+  // =======================================================
 
-  const [error, setError] = useState("");
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
 
   const [lastUpdated, setLastUpdated] =
     useState<Date | null>(null);
-
 
   // =======================================================
   // FETCH DASHBOARD DATA
   // =======================================================
 
-  const fetchDashboardData = useCallback(async () => {
+  const fetchDashboardData = useCallback(
+    async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-    try {
+        // ---------------------------------------------------
+        // API REQUESTS
+        // ---------------------------------------------------
 
-      setLoading(true);
-      setError("");
+        const [
+          riskResponse,
+          supplierResponse,
+          webshieldResponse,
+          scraperResponse,
+        ] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/risk`),
 
+          fetch(`${API_BASE_URL}/api/suppliers`),
 
-      // ---------------------------------------------------
-      // API REQUESTS
-      // ---------------------------------------------------
+          fetch(`${API_BASE_URL}/api/webshield`),
 
-      const [
-        riskResponse,
-        supplierResponse,
-        webshieldResponse,
-        scraperResponse,
-      ] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/scraper-health`),
+        ]);
 
-        fetch(`${API_BASE_URL}/api/risk`),
+        // ---------------------------------------------------
+        // CHECK RESPONSES
+        // ---------------------------------------------------
 
-        fetch(`${API_BASE_URL}/api/suppliers`),
+        if (!riskResponse.ok) {
+          throw new Error(
+            `Risk API failed: ${riskResponse.status}`
+          );
+        }
 
-        fetch(`${API_BASE_URL}/api/webshield`),
+        if (!supplierResponse.ok) {
+          throw new Error(
+            `Supplier API failed: ${supplierResponse.status}`
+          );
+        }
 
-        fetch(`${API_BASE_URL}/api/scraper-health`),
+        if (!webshieldResponse.ok) {
+          throw new Error(
+            `WebShield API failed: ${webshieldResponse.status}`
+          );
+        }
 
-      ]);
+        if (!scraperResponse.ok) {
+          throw new Error(
+            `Scraper API failed: ${scraperResponse.status}`
+          );
+        }
 
+        // ---------------------------------------------------
+        // PARSE JSON
+        // ---------------------------------------------------
 
-      // ---------------------------------------------------
-      // CHECK RESPONSES
-      // ---------------------------------------------------
+        const riskData: RiskData =
+          await riskResponse.json();
 
-      if (!riskResponse.ok) {
-        throw new Error(
-          `Risk API failed: ${riskResponse.status}`
+        const supplierData =
+          await supplierResponse.json();
+
+        const webshieldData: WebShieldData =
+          await webshieldResponse.json();
+
+        const scraperData: ScraperData =
+          await scraperResponse.json();
+
+        // ---------------------------------------------------
+        // UPDATE STATE
+        // ---------------------------------------------------
+
+        setRisk(riskData);
+
+        setSuppliers(
+          Array.isArray(supplierData.suppliers)
+            ? supplierData.suppliers
+            : []
         );
-      }
 
-      if (!supplierResponse.ok) {
-        throw new Error(
-          `Supplier API failed: ${supplierResponse.status}`
+        setWebshield(webshieldData);
+
+        setScraper(scraperData);
+
+        setLastUpdated(new Date());
+
+        console.log(
+          "SupplyShield dashboard data loaded successfully."
         );
-      }
 
-      if (!webshieldResponse.ok) {
-        throw new Error(
-          `WebShield API failed: ${webshieldResponse.status}`
+        console.log(
+          "API:",
+          API_BASE_URL
         );
-      }
-
-      if (!scraperResponse.ok) {
-        throw new Error(
-          `Scraper API failed: ${scraperResponse.status}`
+      } catch (err) {
+        console.error(
+          "SupplyShield API Error:",
+          err
         );
+
+        setError(
+          "Unable to connect to the SupplyShield backend. Make sure FastAPI is running and the API URL is correct."
+        );
+      } finally {
+        setLoading(false);
       }
-
-
-      // ---------------------------------------------------
-      // PARSE JSON
-      // ---------------------------------------------------
-
-      const riskData: RiskData =
-        await riskResponse.json();
-
-      const supplierData =
-        await supplierResponse.json();
-
-      const webshieldData: WebShieldData =
-        await webshieldResponse.json();
-
-      const scraperData: ScraperData =
-        await scraperResponse.json();
-
-
-      // ---------------------------------------------------
-      // UPDATE STATE
-      // ---------------------------------------------------
-
-      setRisk(riskData);
-
-      setSuppliers(
-        Array.isArray(supplierData.suppliers)
-          ? supplierData.suppliers
-          : []
-      );
-
-      setWebshield(webshieldData);
-
-      setScraper(scraperData);
-
-      setLastUpdated(new Date());
-
-
-      console.log(
-        "SupplyShield dashboard data loaded successfully."
-      );
-
-    } catch (err) {
-
-      console.error(
-        "SupplyShield API Error:",
-        err
-      );
-
-      setError(
-        "Unable to connect to the SupplyShield backend. Make sure FastAPI is running on port 8000."
-      );
-
-    } finally {
-
-      setLoading(false);
-
-    }
-
-  }, []);
-
+    },
+    []
+  );
 
   // =======================================================
   // INITIAL LOAD
   // =======================================================
 
   useEffect(() => {
-
     fetchDashboardData();
-
   }, [fetchDashboardData]);
-
 
   // =======================================================
   // LOADING SCREEN
   // =======================================================
 
   if (loading && !risk) {
-
     return (
-
       <div className="loading-screen">
 
         <div className="loading-logo">
@@ -237,20 +254,15 @@ function App() {
         <div className="loading-spinner"></div>
 
       </div>
-
     );
-
   }
-
 
   // =======================================================
   // ERROR SCREEN
   // =======================================================
 
   if (error && !risk) {
-
     return (
-
       <div className="loading-screen">
 
         <div className="error-icon">
@@ -273,31 +285,27 @@ function App() {
         </button>
 
       </div>
-
     );
-
   }
-
 
   // =======================================================
   // SAFETY CHECK
   // =======================================================
 
-  if (!risk || !webshield || !scraper) {
-
+  if (
+    !risk ||
+    !webshield ||
+    !scraper
+  ) {
     return null;
-
   }
-
 
   // =======================================================
   // MAIN DASHBOARD
   // =======================================================
 
   return (
-
     <div className="app-shell">
-
 
       {/* =================================================
           SIDEBAR
@@ -308,13 +316,11 @@ function App() {
         setActivePage={setActivePage}
       />
 
-
       {/* =================================================
           MAIN AREA
           ================================================= */}
 
       <div className="main-area">
-
 
         {/* =================================================
             HEADER
@@ -325,13 +331,11 @@ function App() {
           loading={loading}
         />
 
-
         {/* =================================================
             CONTENT
             ================================================= */}
 
         <main className="dashboard-content">
-
 
           {/* =================================================
               PAGE HEADING
@@ -356,7 +360,6 @@ function App() {
 
             </div>
 
-
             {/* =================================================
                 LIVE STATUS
                 ================================================= */}
@@ -371,13 +374,11 @@ function App() {
 
           </div>
 
-
           {/* =================================================
               LAST UPDATED
               ================================================= */}
 
           {lastUpdated && (
-
             <div
               style={{
                 marginBottom: "18px",
@@ -385,22 +386,17 @@ function App() {
                 fontSize: "11px",
               }}
             >
-
               Last updated:{" "}
 
               {lastUpdated.toLocaleTimeString()}
-
             </div>
-
           )}
 
-
           {/* =================================================
-              DASHBOARD PAGE
+              DASHBOARD
               ================================================= */}
 
           {activePage === "Dashboard" && (
-
             <>
 
               {/* RISK OVERVIEW */}
@@ -408,7 +404,6 @@ function App() {
               <RiskOverview
                 risk={risk}
               />
-
 
               {/* RISK + SUPPLIER */}
 
@@ -424,7 +419,6 @@ function App() {
 
               </div>
 
-
               {/* ALERTS + WEBSHIELD */}
 
               <div className="dashboard-grid">
@@ -439,7 +433,6 @@ function App() {
 
               </div>
 
-
               {/* SCRAPER HEALTH */}
 
               <ScraperHealth
@@ -447,16 +440,13 @@ function App() {
               />
 
             </>
-
           )}
-
 
           {/* =================================================
               RISK INTELLIGENCE
               ================================================= */}
 
           {activePage === "Risk Intelligence" && (
-
             <>
 
               <RiskOverview
@@ -476,59 +466,46 @@ function App() {
               </div>
 
             </>
-
           )}
-
 
           {/* =================================================
               SUPPLIERS
               ================================================= */}
 
           {activePage === "Suppliers" && (
-
             <SupplierRisk
               suppliers={suppliers}
             />
-
           )}
-
 
           {/* =================================================
               WEBSHIELD
               ================================================= */}
 
           {activePage === "WebShield" && (
-
             <WebShield
               data={webshield}
             />
-
           )}
-
 
           {/* =================================================
               SCRAPER HEALTH
               ================================================= */}
 
           {activePage === "Scraper Health" && (
-
             <ScraperHealth
               data={scraper}
             />
-
           )}
-
 
           {/* =================================================
               ALERTS
               ================================================= */}
 
           {activePage === "Alerts" && (
-
             <Alerts
               alerts={risk.alerts}
             />
-
           )}
 
         </main>
@@ -536,10 +513,7 @@ function App() {
       </div>
 
     </div>
-
   );
-
 }
-
 
 export default App;

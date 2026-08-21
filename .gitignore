@@ -27,3 +27,6 @@ Thumbs.db
 # Python generated files
 *.pkl
 *.pyc
+# Generated pipeline outputs
+member2/outputs/*.csv
+member2/outputs/*.json

@@ -23,31 +23,56 @@ function RiskOverview({ risk }: Props) {
   const metrics = [
     {
       title: "Overall Risk",
-      value: `${risk.overall_risk}%`,
+      value: `${risk.overall_risk.toFixed(2)}%`,
       icon: AlertTriangle,
       description: risk.risk_level,
-      className: "danger",
+      className:
+        risk.overall_risk >= 70
+          ? "danger"
+          : risk.overall_risk >= 40
+          ? "warning"
+          : "success",
     },
+
     {
       title: "Disruption Probability",
-      value: `${(risk.disruption_probability * 100).toFixed(0)}%`,
+      value: `${(
+        risk.disruption_probability * 100
+      ).toFixed(0)}%`,
       icon: TrendingUp,
       description: "Supply disruption",
-      className: "warning",
+      className:
+        risk.disruption_probability >= 0.7
+          ? "danger"
+          : risk.disruption_probability >= 0.4
+          ? "warning"
+          : "success",
     },
+
     {
       title: "Supplier Risk",
-      value: `${(risk.supplier_risk * 100).toFixed(0)}%`,
+      value: `${risk.supplier_risk.toFixed(2)}%`,
       icon: Users,
       description: "Supplier exposure",
-      className: "warning",
+      className:
+        risk.supplier_risk >= 70
+          ? "danger"
+          : risk.supplier_risk >= 40
+          ? "warning"
+          : "success",
     },
+
     {
       title: "WebShield Risk",
-      value: `${(risk.webshield_risk * 100).toFixed(0)}%`,
+      value: `${risk.webshield_risk.toFixed(2)}%`,
       icon: Globe,
       description: "Web intelligence",
-      className: "danger",
+      className:
+        risk.webshield_risk >= 70
+          ? "danger"
+          : risk.webshield_risk >= 40
+          ? "warning"
+          : "success",
     },
   ];
 
@@ -66,7 +91,9 @@ function RiskOverview({ risk }: Props) {
 
             <div className="metric-top">
 
-              <span>{metric.title}</span>
+              <span>
+                {metric.title}
+              </span>
 
               <div className="metric-icon">
                 <Icon size={20} />
