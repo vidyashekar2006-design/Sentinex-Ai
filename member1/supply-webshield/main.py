@@ -5,6 +5,8 @@ from normalize import normalize_record
 from validate import validate_record
 from anomaly_detector import detect_price_anomalies
 from schema_guard import check_schema
+from heal_rules import should_trigger_healing
+from heal_call import call_self_healing
 
 
 # ==================================================
@@ -360,6 +362,48 @@ def main():
             f"Reason: "
             f"{anomaly.get('reason')}"
         )
+
+        # ==================================================
+    # SELF-HEALING DECISION
+    # ==================================================
+
+    total_records = sum(
+        stats["total"]
+        for stats in source_stats.values()
+    )
+
+    invalid_records = sum(
+        stats["invalid"]
+        for stats in source_stats.values()
+    )
+
+    schema_warning_count = sum(
+        stats["schema_warnings"]
+        for stats in source_stats.values()
+    )
+
+    healing_needed, healing_reason = should_trigger_healing(
+        total_records,
+        invalid_records,
+        schema_warning_count,
+        len(price_anomalies)
+    )
+
+    print("\n")
+    print("=" * 60)
+    print("SELF-HEALING CHECK")
+    print("=" * 60)
+
+    if healing_needed:
+
+        print("⚠️ SELF-HEALING RECOMMENDED")
+        print(f"Reason: {healing_reason}")
+        print("Run heal_call.py separetely to start the healing process.")
+
+    else:
+
+        print("✅ SCRAPER HEALTHY")
+        print(f"Reason: {healing_reason}")    
 
     # ==================================================
     # SAVE ANOMALY REPORT
