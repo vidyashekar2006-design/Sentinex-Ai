@@ -1,8 +1,11 @@
 import {
-  Users,
   ShieldAlert,
-  ShieldCheck,
+  TrendingUp,
+  TrendingDown,
+  Activity,
   AlertTriangle,
+  CheckCircle2,
+  Users,
 } from "lucide-react";
 
 interface Supplier {
@@ -11,154 +14,686 @@ interface Supplier {
   status: string;
 }
 
-interface Props {
+interface SupplierRiskProps {
   suppliers: Supplier[];
 }
 
-function SupplierRisk({ suppliers }: Props) {
+function SupplierRisk({ suppliers }: SupplierRiskProps) {
+  const totalSuppliers = suppliers.length;
 
+  const highRisk = suppliers.filter(
+    (supplier) => supplier.risk >= 70
+  ).length;
+
+  const mediumRisk = suppliers.filter(
+    (supplier) =>
+      supplier.risk >= 40 && supplier.risk < 70
+  ).length;
+
+  const lowRisk = suppliers.filter(
+    (supplier) => supplier.risk < 40
+  ).length;
+
+  const averageRisk =
+    totalSuppliers > 0
+      ? suppliers.reduce(
+          (sum, supplier) => sum + supplier.risk,
+          0
+        ) / totalSuppliers
+      : 0;
+
+  const getRiskLevel = (risk: number) => {
+    if (risk >= 70) return "HIGH";
+    if (risk >= 40) return "MEDIUM";
+    return "LOW";
+  };
 
   const getRiskClass = (risk: number) => {
-
-    if (risk >= 70) {
-      return "high";
-    }
-
-    if (risk >= 40) {
-      return "medium";
-    }
-
-    return "low";
+    if (risk >= 70) return "risk-high";
+    if (risk >= 40) return "risk-medium";
+    return "risk-low";
   };
 
+  /*
+   * Demo trend values are intentionally deterministic.
+   * Replace these with /api/risk-trend data when you
+   * connect the graph to the backend endpoint.
+   */
+  const trendData = [
+    31,
+    35,
+    32,
+    39,
+    37,
+    43,
+    41,
+    47,
+    44,
+    50,
+    48,
+    Math.max(averageRisk, 48),
+  ];
 
-  const getRiskIcon = (risk: number) => {
-
-    if (risk >= 70) {
-      return <ShieldAlert size={16} />;
-    }
-
-    if (risk >= 40) {
-      return <AlertTriangle size={16} />;
-    }
-
-    return <ShieldCheck size={16} />;
-  };
-
-
-  const visibleSuppliers =
-    suppliers.slice(0, 6);
-
+  const maxTrend = Math.max(...trendData, 100);
 
   return (
+    <div className="risk-intelligence">
 
-    <div className="panel">
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
 
-      {/* HEADER */}
-
-      <div className="panel-header">
+      <div className="risk-page-header">
 
         <div>
 
-          <h3>
+          <div className="risk-eyebrow">
+            <ShieldAlert size={15} />
+            RISK INTELLIGENCE
+          </div>
+
+          <h2>
             Supplier Risk
-          </h3>
+          </h2>
 
           <p>
-            Current supplier exposure across the network
+            Monitor supplier exposure, concentration
+            and operational risk.
           </p>
 
         </div>
 
-
-        <Users
-          size={19}
-          color="#2563eb"
-        />
+        <div className="risk-live-status">
+          <span className="live-dot" />
+          Live risk monitoring
+        </div>
 
       </div>
 
 
-      {/* SUPPLIER LIST */}
+      {/* =====================================================
+          KPI CARDS
+      ===================================================== */}
 
-      <div className="supplier-table">
+      <div className="risk-kpi-grid">
 
-        {visibleSuppliers.length === 0 ? (
+        {/* TOTAL */}
 
-          <div
-            style={{
-              padding: "35px 10px",
-              textAlign: "center",
-              color: "#94a3b8",
-              fontSize: "11px",
-            }}
-          >
+        <div className="risk-kpi-card">
 
-            No supplier intelligence available.
+          <div className="risk-kpi-top">
+
+            <div className="risk-kpi-icon blue">
+              <Users size={19} />
+            </div>
+
+            <span className="risk-kpi-label">
+              TOTAL SUPPLIERS
+            </span>
 
           </div>
 
-        ) : (
+          <strong>
+            {totalSuppliers}
+          </strong>
 
-          visibleSuppliers.map((supplier) => {
+          <span className="risk-kpi-description">
+            Suppliers monitored
+          </span>
 
-            const risk =
-              Number(supplier.risk || 0);
-
-            const riskClass =
-              getRiskClass(risk);
-
-            const status =
-              supplier.status ||
-              (
-                risk >= 70
-                  ? "HIGH"
-                  : risk >= 40
-                  ? "MEDIUM"
-                  : "LOW"
-              );
+        </div>
 
 
-            return (
+        {/* HIGH */}
 
-              <div
-                className="supplier-row"
-                key={supplier.name}
+        <div className="risk-kpi-card">
+
+          <div className="risk-kpi-top">
+
+            <div className="risk-kpi-icon red">
+              <ShieldAlert size={19} />
+            </div>
+
+            <span className="risk-kpi-label">
+              HIGH RISK
+            </span>
+
+          </div>
+
+          <strong>
+            {highRisk}
+          </strong>
+
+          <span className="risk-kpi-description">
+            Immediate attention
+          </span>
+
+        </div>
+
+
+        {/* MEDIUM */}
+
+        <div className="risk-kpi-card">
+
+          <div className="risk-kpi-top">
+
+            <div className="risk-kpi-icon orange">
+              <AlertTriangle size={19} />
+            </div>
+
+            <span className="risk-kpi-label">
+              MEDIUM RISK
+            </span>
+
+          </div>
+
+          <strong>
+            {mediumRisk}
+          </strong>
+
+          <span className="risk-kpi-description">
+            Requires monitoring
+          </span>
+
+        </div>
+
+
+        {/* AVERAGE */}
+
+        <div className="risk-kpi-card">
+
+          <div className="risk-kpi-top">
+
+            <div className="risk-kpi-icon green">
+              <Activity size={19} />
+            </div>
+
+            <span className="risk-kpi-label">
+              AVG RISK
+            </span>
+
+          </div>
+
+          <strong>
+            {averageRisk.toFixed(1)}%
+          </strong>
+
+          <span className="risk-kpi-description">
+            Network risk score
+          </span>
+
+        </div>
+
+      </div>
+
+
+      {/* =====================================================
+          ANALYTICS GRID
+      ===================================================== */}
+
+      <div className="risk-analytics-grid">
+
+
+        {/* =================================================
+            RISK TREND
+        ================================================= */}
+
+        <div className="risk-chart-card">
+
+          <div className="risk-card-header">
+
+            <div>
+
+              <span className="risk-card-eyebrow">
+                NETWORK EXPOSURE
+              </span>
+
+              <h3>
+                Risk Trend
+              </h3>
+
+              <p>
+                Supplier risk movement over time
+              </p>
+
+            </div>
+
+            <div className="trend-badge">
+
+              <TrendingUp size={15} />
+
+              <span>
+                +8.4%
+              </span>
+
+            </div>
+
+          </div>
+
+
+          {/* CHART */}
+
+          <div className="risk-chart">
+
+            <div className="chart-y-axis">
+
+              <span>100</span>
+              <span>75</span>
+              <span>50</span>
+              <span>25</span>
+              <span>0</span>
+
+            </div>
+
+
+            <div className="chart-area">
+
+              <div className="chart-grid-line line-1" />
+              <div className="chart-grid-line line-2" />
+              <div className="chart-grid-line line-3" />
+              <div className="chart-grid-line line-4" />
+
+
+              <svg
+                className="risk-svg"
+                viewBox="0 0 1000 300"
+                preserveAspectRatio="none"
               >
 
-                {/* SUPPLIER */}
+                <defs>
 
-                <div className="supplier-info">
+                  <linearGradient
+                    id="riskGradient"
+                    x1="0"
+                    x2="0"
+                    y1="0"
+                    y2="1"
+                  >
 
-                  <div className="supplier-avatar">
+                    <stop
+                      offset="0%"
+                      stopOpacity="0.28"
+                    />
 
-                    {supplier.name
-                      .charAt(0)
-                      .toUpperCase()}
+                    <stop
+                      offset="100%"
+                      stopOpacity="0"
+                    />
+
+                  </linearGradient>
+
+                </defs>
+
+
+                <polygon
+                  className="risk-area"
+                  points={`
+                    ${trendData
+                      .map((value, index) => {
+                        const x =
+                          (index /
+                            (trendData.length - 1)) *
+                          1000;
+
+                        const y =
+                          300 -
+                          (value / maxTrend) *
+                            250;
+
+                        return `${x},${y}`;
+                      })
+                      .join(" ")}
+
+                    1000,300
+                    0,300
+                  `}
+                />
+
+
+                <polyline
+                  className="risk-line"
+                  points={trendData
+                    .map((value, index) => {
+
+                      const x =
+                        (index /
+                          (trendData.length - 1)) *
+                        1000;
+
+                      const y =
+                        300 -
+                        (value / maxTrend) *
+                          250;
+
+                      return `${x},${y}`;
+
+                    })
+                    .join(" ")}
+                />
+
+
+                {trendData.map(
+                  (value, index) => {
+
+                    const x =
+                      (index /
+                        (trendData.length - 1)) *
+                      1000;
+
+                    const y =
+                      300 -
+                      (value / maxTrend) *
+                        250;
+
+                    return (
+                      <circle
+                        key={index}
+                        className="risk-point"
+                        cx={x}
+                        cy={y}
+                        r="5"
+                      />
+                    );
+                  }
+                )}
+
+              </svg>
+
+
+              <div className="chart-x-axis">
+
+                <span>Jan</span>
+                <span>Feb</span>
+                <span>Mar</span>
+                <span>Apr</span>
+                <span>May</span>
+                <span>Jun</span>
+                <span>Jul</span>
+                <span>Aug</span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* =================================================
+            RISK DISTRIBUTION
+        ================================================= */}
+
+        <div className="risk-distribution-card">
+
+          <div className="risk-card-header">
+
+            <div>
+
+              <span className="risk-card-eyebrow">
+                SUPPLIER EXPOSURE
+              </span>
+
+              <h3>
+                Risk Distribution
+              </h3>
+
+            </div>
+
+          </div>
+
+
+          <div className="risk-donut-wrapper">
+
+            <div
+              className="risk-donut"
+              style={{
+                background: `conic-gradient(
+                  #ef4444 0deg ${
+                    totalSuppliers
+                      ? (highRisk /
+                          totalSuppliers) *
+                        360
+                      : 0
+                  }deg,
+
+                  #f59e0b ${
+                    totalSuppliers
+                      ? (highRisk /
+                          totalSuppliers) *
+                        360
+                      : 0
+                  }deg ${
+                    totalSuppliers
+                      ? ((highRisk +
+                          mediumRisk) /
+                          totalSuppliers) *
+                        360
+                      : 0
+                  }deg,
+
+                  #22c55e ${
+                    totalSuppliers
+                      ? ((highRisk +
+                          mediumRisk) /
+                          totalSuppliers) *
+                        360
+                      : 0
+                  }deg 360deg
+                )`,
+              }}
+            >
+
+              <div className="risk-donut-inner">
+
+                <strong>
+                  {averageRisk.toFixed(0)}%
+                </strong>
+
+                <span>
+                  Avg Risk
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div className="distribution-list">
+
+            <div>
+
+              <span className="distribution-label">
+                <i className="dot high" />
+                High Risk
+              </span>
+
+              <strong>
+                {highRisk}
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span className="distribution-label">
+                <i className="dot medium" />
+                Medium Risk
+              </span>
+
+              <strong>
+                {mediumRisk}
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span className="distribution-label">
+                <i className="dot low" />
+                Low Risk
+              </span>
+
+              <strong>
+                {lowRisk}
+              </strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* =====================================================
+          SUPPLIER TABLE
+      ===================================================== */}
+
+      <div className="supplier-risk-table-card">
+
+        <div className="risk-card-header">
+
+          <div>
+
+            <span className="risk-card-eyebrow">
+              SUPPLIER NETWORK
+            </span>
+
+            <h3>
+              Supplier Risk Exposure
+            </h3>
+
+            <p>
+              Highest-risk suppliers requiring
+              monitoring or intervention.
+            </p>
+
+          </div>
+
+          <button className="risk-view-button">
+            View all
+          </button>
+
+        </div>
+
+
+        <div className="supplier-table">
+
+          <div className="supplier-table-header">
+
+            <span>
+              SUPPLIER
+            </span>
+
+            <span>
+              RISK SCORE
+            </span>
+
+            <span>
+              STATUS
+            </span>
+
+          </div>
+
+
+          {suppliers
+            .slice()
+            .sort(
+              (a, b) => b.risk - a.risk
+            )
+            .slice(0, 6)
+            .map((supplier, index) => {
+
+              const level =
+                getRiskLevel(
+                  supplier.risk
+                );
+
+              return (
+
+                <div
+                  className="supplier-row"
+                  key={supplier.name}
+                  style={{
+                    animationDelay: `${index * 70}ms`,
+                  }}
+                >
+
+                  <div className="supplier-name">
+
+                    <div className="supplier-avatar">
+                      {supplier.name
+                        .slice(0, 1)
+                        .toUpperCase()}
+                    </div>
+
+                    <div>
+
+                      <strong>
+                        {supplier.name}
+                      </strong>
+
+                      <span>
+                        Supplier #{index + 1}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="supplier-risk-score">
+
+                    <div className="risk-progress">
+
+                      <div
+                        className={`risk-progress-fill ${getRiskClass(
+                          supplier.risk
+                        )}`}
+                        style={{
+                          width: `${Math.min(
+                            supplier.risk,
+                            100
+                          )}%`,
+                        }}
+                      />
+
+                    </div>
+
+                    <strong>
+                      {supplier.risk.toFixed(1)}%
+                    </strong>
 
                   </div>
 
 
                   <div>
 
-                    <strong>
-                      {supplier.name}
-                    </strong>
-
-
                     <span
-                      className={`badge ${riskClass}`}
+                      className={`supplier-status ${getRiskClass(
+                        supplier.risk
+                      )}`}
                     >
 
-                      {getRiskIcon(risk)}
+                      {level === "HIGH" && (
+                        <AlertTriangle size={13} />
+                      )}
 
-                      <span
-                        style={{
-                          marginLeft: "4px",
-                        }}
-                      >
-                        {status}
-                      </span>
+                      {level === "MEDIUM" && (
+                        <Activity size={13} />
+                      )}
+
+                      {level === "LOW" && (
+                        <CheckCircle2 size={13} />
+                      )}
+
+                      {level}
 
                     </span>
 
@@ -166,75 +701,95 @@ function SupplierRisk({ suppliers }: Props) {
 
                 </div>
 
+              );
+            })}
 
-                {/* RISK */}
-
-                <div className="supplier-risk">
-
-                  <div className="progress">
-
-                    <div
-                      className={`progress-fill ${riskClass}`}
-                      style={{
-                        width:
-                          `${Math.min(
-                            Math.max(risk, 0),
-                            100
-                          )}%`,
-                      }}
-                    />
-
-                  </div>
-
-
-                  <strong>
-                    {risk.toFixed(1)}%
-                  </strong>
-
-                </div>
-
-              </div>
-
-            );
-
-          })
-
-        )}
+        </div>
 
       </div>
 
 
-      {/* FOOTER */}
+      {/* =====================================================
+          RISK SIGNALS
+      ===================================================== */}
 
-      {suppliers.length > 6 && (
+      <div className="risk-signals">
 
-        <div
-          style={{
-            marginTop: "13px",
-            paddingTop: "12px",
-            borderTop: "1px solid #eef2f6",
-            color: "#64748b",
-            fontSize: "10px",
-            display: "flex",
-            justifyContent: "space-between",
-          }}
-        >
+        <div className="risk-signal-card">
 
-          <span>
-            Showing top 6 suppliers
-          </span>
+          <div className="signal-icon red">
+            <ShieldAlert size={18} />
+          </div>
 
-          <strong
-            style={{
-              color: "#2563eb",
-            }}
-          >
-            {suppliers.length} total
-          </strong>
+          <div>
+
+            <span>
+              HIGH-RISK EXPOSURE
+            </span>
+
+            <strong>
+              {highRisk} suppliers
+            </strong>
+
+            <p>
+              Require immediate review
+            </p>
+
+          </div>
 
         </div>
 
-      )}
+
+        <div className="risk-signal-card">
+
+          <div className="signal-icon orange">
+            <AlertTriangle size={18} />
+          </div>
+
+          <div>
+
+            <span>
+              MONITORING REQUIRED
+            </span>
+
+            <strong>
+              {mediumRisk} suppliers
+            </strong>
+
+            <p>
+              Showing moderate risk signals
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div className="risk-signal-card">
+
+          <div className="signal-icon green">
+            <CheckCircle2 size={18} />
+          </div>
+
+          <div>
+
+            <span>
+              LOW EXPOSURE
+            </span>
+
+            <strong>
+              {lowRisk} suppliers
+            </strong>
+
+            <p>
+              Currently within safe range
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
 
     </div>
   );
