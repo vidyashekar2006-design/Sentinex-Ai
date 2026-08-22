@@ -73,6 +73,7 @@ app.add_middleware(
     "http://127.0.0.1:5176",
 
     "https://supply-shield-ai-sand.vercel.app",
+    "https://sentinex-ai.vercel.app",
 ],
 
     allow_credentials=True,

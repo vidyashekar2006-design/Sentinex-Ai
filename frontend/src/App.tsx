@@ -20,6 +20,8 @@ import {
 
 import ScraperHealth from "./components/ScraperHealth";
 import SupplierRisk from "./components/SupplierRisk";
+import RiskOverview from "./components/RiskOverview";
+import WebShield from "./components/WebShield";
 
 // =========================================================
 // TYPES
@@ -30,6 +32,23 @@ interface Supplier {
   risk: number;
   status: string;
 }
+
+interface RiskData {
+  overall_risk: number;
+  risk_level: string;
+  disruption_probability: number;
+  supplier_risk: number;
+  market_anomaly: number;
+  webshield_risk: number;
+}
+
+interface WebShieldData {
+  suspicious_listings: number;
+  price_anomalies: number;
+  counterfeit_risks: number;
+  supplier_web_alerts: number;
+}
+
 interface ScraperSource {
   name: string;
   status: string;
@@ -120,6 +139,12 @@ function App() {
 
   const [scraper, setScraper] =
     useState<ScraperData | null>(null);
+
+  const [risk, setRisk] =
+    useState<RiskData | null>(null);
+
+  const [webshield, setWebshield] =
+    useState<WebShieldData | null>(null);
 
   const [suppliers, setSuppliers] =
     useState<Supplier[]>([]);
@@ -305,20 +330,89 @@ function App() {
         // RISK API
         // -------------------------------------------------
 
-        if (!riskResponse.ok) {
+        if (riskResponse.ok) {
+          const riskData =
+            await riskResponse.json();
+
+          setRisk({
+            overall_risk:
+              Number(
+                riskData?.overall_risk ?? 0
+              ),
+
+            risk_level:
+              typeof riskData?.risk_level ===
+              "string"
+                ? riskData.risk_level
+                : "UNKNOWN",
+
+            disruption_probability:
+              Number(
+                riskData?.disruption_probability ??
+                  0
+              ),
+
+            supplier_risk:
+              Number(
+                riskData?.supplier_risk ?? 0
+              ),
+
+            market_anomaly:
+              Number(
+                riskData?.market_anomaly ?? 0
+              ),
+
+            webshield_risk:
+              Number(
+                riskData?.webshield_risk ?? 0
+              ),
+          });
+        } else {
           console.warn(
             "Risk API unavailable"
           );
+
+          setRisk(null);
         }
 
         // -------------------------------------------------
         // WEBSHIELD API
         // -------------------------------------------------
 
-        if (!webshieldResponse.ok) {
+        if (webshieldResponse.ok) {
+          const webshieldData =
+            await webshieldResponse.json();
+
+          setWebshield({
+            suspicious_listings:
+              Number(
+                webshieldData?.suspicious_listings ??
+                  0
+              ),
+
+            price_anomalies:
+              Number(
+                webshieldData?.price_anomalies ?? 0
+              ),
+
+            counterfeit_risks:
+              Number(
+                webshieldData?.counterfeit_risks ??
+                  0
+              ),
+
+            supplier_web_alerts:
+              Number(
+                webshieldData?.supplier_web_alerts ??
+                  0
+              ),
+          });
+        } else {
           console.warn(
             "WebShield API unavailable"
           );
+
+          setWebshield(null);
         }
 
       } catch (err) {
@@ -354,6 +448,38 @@ function App() {
     setSidebarOpen(false);
   };
 
+  const getSupplierRiskLevel = (
+    supplier: Supplier
+  ) => {
+    if (supplier.status) {
+      return supplier.status;
+    }
+
+    if (supplier.risk >= 70) {
+      return "HIGH";
+    }
+
+    if (supplier.risk >= 40) {
+      return "MEDIUM";
+    }
+
+    return "LOW";
+  };
+
+  const getSupplierRiskClass = (
+    riskScore: number
+  ) => {
+    if (riskScore >= 70) {
+      return "risk-high";
+    }
+
+    if (riskScore >= 40) {
+      return "risk-medium";
+    }
+
+    return "risk-low";
+  };
+
   // =======================================================
   // PAGE CONTENT
   // =======================================================
@@ -369,9 +495,39 @@ function App() {
       "Risk Intelligence"
     ) {
       return (
-        <SupplierRisk
-          suppliers={suppliers}
-        />
+        <>
+
+          {risk ? (
+            <RiskOverview
+              risk={risk}
+            />
+          ) : (
+            <div className="dashboard-main-card">
+
+              <div className="loading-card">
+
+                <div className="loading-spinner">
+                  <ShieldCheck size={22} />
+                </div>
+
+                <strong>
+                  Loading risk intelligence
+                </strong>
+
+                <span>
+                  Connecting to Sentinex AI API...
+                </span>
+
+              </div>
+
+            </div>
+          )}
+
+          <SupplierRisk
+            suppliers={suppliers}
+          />
+
+        </>
       );
     }
 
@@ -425,22 +581,170 @@ function App() {
       "Supplier Network"
     ) {
       return (
-        <div className="dashboard-main-card">
+        <div className="supplier-risk-table-card">
 
-          <div className="loading-card">
+          <div className="risk-card-header">
 
-            <div className="loading-spinner">
-              <Users size={22} />
+            <div>
+
+              <span className="risk-card-eyebrow">
+                SUPPLIER NETWORK
+              </span>
+
+              <h3>
+                Supplier Network
+              </h3>
+
+              <p>
+                Live supplier risk data from the
+                Sentinex AI backend.
+              </p>
+
             </div>
 
             <strong>
-              Supplier Network
+              {suppliers.length} monitored
             </strong>
 
-            <span>
-              Supplier intelligence module
-              is connected.
-            </span>
+          </div>
+
+          <div className="supplier-table">
+
+            <div className="supplier-table-header">
+
+              <span>
+                SUPPLIER
+              </span>
+
+              <span>
+                RISK SCORE
+              </span>
+
+              <span>
+                STATUS
+              </span>
+
+            </div>
+
+            {suppliers.length > 0 ? (
+              suppliers
+                .slice()
+                .sort(
+                  (a, b) => b.risk - a.risk
+                )
+                .map((supplier, index) => {
+
+                  const level =
+                    getSupplierRiskLevel(
+                      supplier
+                    );
+
+                  const riskClass =
+                    getSupplierRiskClass(
+                      supplier.risk
+                    );
+
+                  return (
+
+                    <div
+                      className="supplier-row"
+                      key={supplier.name}
+                      style={{
+                        animationDelay: `${index * 70}ms`,
+                      }}
+                    >
+
+                      <div className="supplier-name">
+
+                        <div className="supplier-avatar">
+                          {supplier.name
+                            .slice(0, 1)
+                            .toUpperCase()}
+                        </div>
+
+                        <div>
+
+                          <strong>
+                            {supplier.name}
+                          </strong>
+
+                          <span>
+                            Supplier #{index + 1}
+                          </span>
+
+                        </div>
+
+                      </div>
+
+                      <div className="supplier-risk-score">
+
+                        <div className="risk-progress">
+
+                          <div
+                            className={`risk-progress-fill ${riskClass}`}
+                            style={{
+                              width: `${Math.min(
+                                supplier.risk,
+                                100
+                              )}%`,
+                            }}
+                          />
+
+                        </div>
+
+                        <strong>
+                          {supplier.risk.toFixed(1)}%
+                        </strong>
+
+                      </div>
+
+                      <div>
+
+                        <span
+                          className={`supplier-status ${riskClass}`}
+                        >
+                          {level}
+                        </span>
+
+                      </div>
+
+                    </div>
+
+                  );
+                })
+            ) : (
+              <div className="supplier-row">
+
+                <div className="supplier-name">
+
+                  <div className="supplier-avatar">
+                    S
+                  </div>
+
+                  <div>
+
+                    <strong>
+                      No supplier records returned
+                    </strong>
+
+                    <span>
+                      Waiting for backend supplier data
+                    </span>
+
+                  </div>
+
+                </div>
+
+                <span>
+                  --
+                </span>
+
+                <span>
+                  --
+                </span>
+
+              </div>
+            )}
 
           </div>
 
@@ -459,22 +763,27 @@ function App() {
       return (
         <div className="dashboard-main-card">
 
-          <div className="loading-card">
+          {webshield ? (
+            <WebShield
+              data={webshield}
+            />
+          ) : (
+            <div className="loading-card">
 
-            <div className="loading-spinner">
-              <Globe2 size={22} />
+              <div className="loading-spinner">
+                <Globe2 size={22} />
+              </div>
+
+              <strong>
+                Loading WebShield intelligence
+              </strong>
+
+              <span>
+                Connecting to Sentinex AI API...
+              </span>
+
             </div>
-
-            <strong>
-              WebShield Monitoring
-            </strong>
-
-            <span>
-              Web intelligence and anomaly
-              monitoring is active.
-            </span>
-
-          </div>
+          )}
 
         </div>
       );

@@ -312,11 +312,13 @@ function SupplierRisk({ suppliers }: SupplierRiskProps) {
 
                     <stop
                       offset="0%"
+                      stopColor="#2563eb"
                       stopOpacity="0.28"
                     />
 
                     <stop
                       offset="100%"
+                      stopColor="#2563eb"
                       stopOpacity="0"
                     />
 
@@ -327,6 +329,8 @@ function SupplierRisk({ suppliers }: SupplierRiskProps) {
 
                 <polygon
                   className="risk-area"
+                  fill="url(#riskGradient)"
+                  stroke="none"
                   points={`
                     ${trendData
                       .map((value, index) => {
@@ -352,6 +356,11 @@ function SupplierRisk({ suppliers }: SupplierRiskProps) {
 
                 <polyline
                   className="risk-line"
+                  fill="none"
+                  stroke="#2563eb"
+                  strokeWidth={4}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   points={trendData
                     .map((value, index) => {
 
@@ -389,6 +398,9 @@ function SupplierRisk({ suppliers }: SupplierRiskProps) {
                       <circle
                         key={index}
                         className="risk-point"
+                        fill="#ffffff"
+                        stroke="#2563eb"
+                        strokeWidth={4}
                         cx={x}
                         cy={y}
                         r="5"
