@@ -30,3 +30,6 @@ Thumbs.db
 # Generated pipeline outputs
 member2/outputs/*.csv
 member2/outputs/*.json
+
+# Production environment variables
+frontend/.env.production
