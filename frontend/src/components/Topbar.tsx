@@ -38,7 +38,7 @@ function Topbar({
 
         <div>
           <div className="breadcrumb">
-            <span>SupplyShield</span>
+            <span>Sentinex AI</span>
 
             <ChevronRight size={14} />
 
@@ -95,7 +95,7 @@ function Topbar({
 
           <div className="profile-info">
             <strong>
-              SupplyShield
+              Sentinex AI
             </strong>
 
             <span>

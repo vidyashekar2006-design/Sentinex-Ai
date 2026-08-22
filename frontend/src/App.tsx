@@ -328,7 +328,7 @@ function App() {
         );
 
         setError(
-          "Unable to connect to the SupplyShield backend."
+          "Unable to connect to the Sentinex AI backend."
         );
       } finally {
         setLoading(false);
@@ -404,7 +404,7 @@ function App() {
                 </strong>
 
                 <span>
-                  Connecting to SupplyShield API...
+                  Connecting to Sentinex AI API...
                 </span>
 
               </div>
@@ -716,7 +716,7 @@ function App() {
                 </strong>
 
                 <span>
-                  Connecting to SupplyShield API...
+                  Connecting to Sentinex AI API...
                 </span>
 
               </div>
@@ -749,7 +749,7 @@ function App() {
             </h3>
 
             <p>
-              SupplyShield is continuously
+              Sentinex AI is continuously
               monitoring your supplier ecosystem
               for anomalies, data quality issues
               and operational risk signals.
@@ -833,7 +833,7 @@ function App() {
         <footer className="dashboard-footer">
 
           <span>
-            © 2026 SupplyShield AI
+            © 2026 Sentinex AI AI
           </span>
 
           <span>
@@ -913,7 +913,7 @@ function App() {
           <div className="brand-text">
 
             <strong>
-              SupplyShield
+              Sentinex AI
             </strong>
 
             <span>
@@ -1011,7 +1011,7 @@ function App() {
             </div>
 
             <p>
-              SupplyShield monitoring services
+              Sentinex AI monitoring services
               are running normally.
             </p>
 
@@ -1074,7 +1074,7 @@ function App() {
               <div className="breadcrumb">
 
                 <span>
-                  SupplyShield
+                  Sentinex AI
                 </span>
 
                 <ChevronRight
@@ -1143,7 +1143,7 @@ function App() {
               <div className="profile-info">
 
                 <strong>
-                  SupplyShield
+                  Sentinex AI
                 </strong>
 
                 <span>

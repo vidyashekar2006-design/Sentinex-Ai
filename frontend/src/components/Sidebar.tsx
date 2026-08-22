@@ -49,7 +49,7 @@ function Sidebar({ activePage, setActivePage }: SidebarProps) {
         </div>
 
         <div>
-          <h2>SupplyShield</h2>
+          <h2>Sentinex AI</h2>
           <span>AI Intelligence</span>
         </div>
       </div>

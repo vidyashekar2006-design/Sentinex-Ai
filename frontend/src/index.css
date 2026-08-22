@@ -1821,3 +1821,366 @@ input:focus-visible {
       1fr 1fr;
   }
 }
+/* =========================================================
+   SENTINEX AI — ENTERPRISE MOTION SYSTEM
+   ========================================================= */
+
+/* ---------- Global entrance ---------- */
+
+@keyframes sentinexFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sentinexFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sentinexScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------- Live pulse ---------- */
+
+@keyframes sentinexPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.28);
+  }
+
+  50% {
+    box-shadow: 0 0 0 6px rgba(22, 163, 74, 0);
+  }
+}
+
+/* ---------- Shimmer ---------- */
+
+@keyframes sentinexShimmer {
+  0% {
+    background-position: -500px 0;
+  }
+
+  100% {
+    background-position: 500px 0;
+  }
+}
+
+/* ---------- Rotate ---------- */
+
+@keyframes sentinexRotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   DASHBOARD ENTRANCE
+   ========================================================= */
+
+.dashboard-content {
+  animation: sentinexFadeIn 0.45s ease-out both;
+}
+
+.page-heading {
+  animation: sentinexFadeUp 0.5s ease-out both;
+}
+
+
+/* =========================================================
+   METRIC CARDS
+   ========================================================= */
+
+.metric-card {
+  animation: sentinexFadeUp 0.55s ease-out both;
+}
+
+.metric-card:nth-child(1) {
+  animation-delay: 0.04s;
+}
+
+.metric-card:nth-child(2) {
+  animation-delay: 0.09s;
+}
+
+.metric-card:nth-child(3) {
+  animation-delay: 0.14s;
+}
+
+.metric-card:nth-child(4) {
+  animation-delay: 0.19s;
+}
+
+
+/* =========================================================
+   PROFESSIONAL CARD HOVER
+   ========================================================= */
+
+.metric-card:hover {
+  transform: translateY(-4px);
+}
+
+.metric-card:hover .metric-icon {
+  transform: scale(1.06);
+}
+
+.metric-icon {
+  transition:
+    transform 0.25s ease,
+    background 0.25s ease;
+}
+
+
+/* =========================================================
+   PANELS
+   ========================================================= */
+
+.panel {
+  animation: sentinexFadeUp 0.6s ease-out both;
+}
+
+.dashboard-grid .panel:nth-child(1) {
+  animation-delay: 0.22s;
+}
+
+.dashboard-grid .panel:nth-child(2) {
+  animation-delay: 0.28s;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.sidebar {
+  animation: sentinexFadeIn 0.4s ease-out both;
+}
+
+.logo {
+  animation: sentinexFadeUp 0.45s ease-out both;
+}
+
+.nav-item {
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.nav-item:hover {
+  transform: translateX(3px);
+}
+
+
+/* =========================================================
+   TOPBAR
+   ========================================================= */
+
+.topbar {
+  animation: sentinexFadeIn 0.4s ease-out both;
+}
+
+.search-box {
+  transition:
+    width 0.25s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.search-box:focus-within {
+  width: min(430px, 48%);
+}
+
+
+/* =========================================================
+   ICON BUTTONS
+   ========================================================= */
+
+.icon-button {
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.icon-button:hover {
+  transform: translateY(-2px);
+}
+
+
+/* =========================================================
+   LIVE INDICATORS
+   ========================================================= */
+
+.live-indicator span,
+.status-dot {
+  animation: sentinexPulse 2s infinite;
+}
+
+
+/* =========================================================
+   BADGES
+   ========================================================= */
+
+.badge {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.badge:hover {
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   SUPPLIER ROWS
+   ========================================================= */
+
+.supplier-row {
+  transition:
+    background 0.2s ease,
+    padding 0.2s ease,
+    transform 0.2s ease;
+}
+
+.supplier-row:hover {
+  transform: translateX(2px);
+}
+
+
+/* =========================================================
+   PROGRESS BARS
+   ========================================================= */
+
+.progress-fill {
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-fill::after {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+
+  transform: translateX(-100%);
+
+  animation: sentinexShimmer 2.8s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   ALERTS
+   ========================================================= */
+
+.alert-item {
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    padding 0.2s ease;
+}
+
+.alert-item:hover {
+  transform: translateX(4px);
+  background: #fafcff;
+}
+
+
+/* =========================================================
+   WEB SHIELD ITEMS
+   ========================================================= */
+
+.webshield-item {
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.webshield-item:hover {
+  transform: translateY(-2px);
+  border-color: #dbeafe;
+  box-shadow: var(--shadow-sm);
+}
+
+
+/* =========================================================
+   CHART CONTAINERS
+   ========================================================= */
+
+.chart-container {
+  animation: sentinexScaleIn 0.7s ease-out both;
+  animation-delay: 0.3s;
+}
+
+
+/* =========================================================
+   LOADING / SKELETON EFFECT
+   ========================================================= */
+
+.loading,
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f1f5f9 25%,
+    #f8fafc 50%,
+    #f1f5f9 75%
+  );
+
+  background-size: 500px 100%;
+
+  animation: sentinexShimmer 1.5s infinite linear;
+}
+
+
+/* =========================================================
+   REDUCED MOTION ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
