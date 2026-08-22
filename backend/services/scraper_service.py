@@ -1,92 +1,524 @@
-from datetime import datetime
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import List, Dict
+import json
 
 
 # ============================================================
-# SUPPLYSHIELD AI - SELF-HEALING SCRAPER SERVICE
+# SUPPLYSHIELD AI - REAL MEMBER 1 SCRAPER HEALTH SERVICE
+# ============================================================
+#
+# This service reads the actual outputs produced by:
+#
+# member1/supply-webshield/main.py
+#
+# It does NOT create fake scraper statistics.
+#
+# Sources:
+#   - DeoDap
+#   - TradeIndia
+#   - Meesho
+#
 # ============================================================
 
-# Simulated public web sources.
-# Later these can be replaced with Bright Data scraper
-# results or other permitted public sources.
+
+# ============================================================
+# PROJECT PATHS
+# ============================================================
+
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+
+PROJECT_ROOT = BACKEND_DIR.parent
+
+MEMBER1_DIR = (
+    PROJECT_ROOT
+    / "member1"
+    / "supply-webshield"
+)
+
+RAW_DIR = MEMBER1_DIR / "data" / "raw"
+
+PROCESSED_DIR = MEMBER1_DIR / "data" / "processed"
+
+REJECTED_DIR = MEMBER1_DIR / "data" / "rejected"
+
+
+UNIFIED_DATA_FILE = (
+    PROCESSED_DIR
+    / "unified_supply_data.json"
+)
+
+INVALID_DATA_FILE = (
+    REJECTED_DIR
+    / "invalid_records.json"
+)
+
+PRICE_ANOMALY_FILE = (
+    REJECTED_DIR
+    / "price_anomalies.json"
+)
+
+
+# ============================================================
+# REAL MEMBER 1 SOURCES
+# ============================================================
 
 SCRAPER_SOURCES = [
     {
-        "name": "Supplier News Feed",
-        "url": "https://example.com/supplier-news",
-        "status": "healthy"
+        "name": "DeoDap",
+        "file": "deodap.json",
     },
     {
-        "name": "Market Price Feed",
-        "url": "https://example.com/market-prices",
-        "status": "healthy"
+        "name": "TradeIndia",
+        "file": "tradeindia.json",
     },
     {
-        "name": "Industry News Feed",
-        "url": "https://example.com/industry-news",
-        "status": "healthy"
+        "name": "Meesho",
+        "file": "meesho.json",
     },
-    {
-        "name": "Supply Chain News",
-        "url": "https://example.com/supply-chain",
-        "status": "healthy"
-    },
-    {
-        "name": "Manufacturing Feed",
-        "url": "https://example.com/manufacturing",
-        "status": "healthy"
-    },
-    {
-        "name": "Commodity Feed",
-        "url": "https://example.com/commodity",
-        "status": "healthy"
-    },
-    {
-        "name": "Logistics Feed",
-        "url": "https://example.com/logistics",
-        "status": "healthy"
-    },
-    {
-        "name": "Technology Supply Feed",
-        "url": "https://example.com/technology",
-        "status": "healthy"
-    },
-    {
-        "name": "Global Trade Feed",
-        "url": "https://example.com/global-trade",
-        "status": "failed"
-    },
-    {
-        "name": "Economic News Feed",
-        "url": "https://example.com/economy",
-        "status": "failed"
-    }
 ]
 
 
 # ============================================================
-# SCRAPER STATE
+# JSON HELPERS
 # ============================================================
 
-SCRAPER_STATE = {
-    "total_sources": 10,
-    "healthy": 8,
-    "failed": 2,
-    "self_healed": 2,
-    "total_attempts": 12,
-    "successful_requests": 10,
-    "last_run": datetime.utcnow().isoformat(),
-    "status": "healthy"
-}
+def load_json(path: Path, default):
+
+    try:
+
+        if not path.exists():
+            return default
+
+        with open(
+            path,
+            "r",
+            encoding="utf-8"
+        ) as file:
+
+            return json.load(file)
+
+    except Exception:
+
+        return default
 
 
 # ============================================================
-# GET SOURCES
+# GET RECORDS FROM DIFFERENT JSON STRUCTURES
+# ============================================================
+
+def extract_records(data):
+
+    if isinstance(data, list):
+        return data
+
+    if isinstance(data, dict):
+
+        for key in [
+            "data",
+            "results",
+            "records",
+            "items"
+        ]:
+
+            value = data.get(key)
+
+            if isinstance(value, list):
+                return value
+
+        return [data]
+
+    return []
+
+
+# ============================================================
+# LOAD MEMBER 1 OUTPUTS
+# ============================================================
+
+def load_unified_data() -> List[Dict]:
+
+    data = load_json(
+        UNIFIED_DATA_FILE,
+        []
+    )
+
+    return extract_records(data)
+
+
+def load_invalid_data() -> List[Dict]:
+
+    data = load_json(
+        INVALID_DATA_FILE,
+        []
+    )
+
+    return extract_records(data)
+
+
+def load_price_anomalies() -> List[Dict]:
+
+    data = load_json(
+        PRICE_ANOMALY_FILE,
+        []
+    )
+
+    return extract_records(data)
+
+
+# ============================================================
+# COUNT SOURCE RECORDS
+# ============================================================
+
+def count_source_records(
+    source_name: str,
+    records: List[Dict]
+) -> int:
+
+    count = 0
+
+    for record in records:
+
+        if not isinstance(record, dict):
+            continue
+
+        if record.get("source") == source_name:
+
+            count += 1
+
+    return count
+
+
+# ============================================================
+# COUNT INVALID SOURCE RECORDS
+# ============================================================
+
+def count_invalid_source_records(
+    source_name: str,
+    records: List[Dict]
+) -> int:
+
+    count = 0
+
+    for item in records:
+
+        if not isinstance(item, dict):
+            continue
+
+        # Member 1 stores invalid records like:
+        #
+        # {
+        #     "record": {...},
+        #     "issues": [...]
+        # }
+
+        record = item.get(
+            "record",
+            item
+        )
+
+        if not isinstance(record, dict):
+            continue
+
+        if record.get("source") == source_name:
+
+            count += 1
+
+    return count
+
+
+# ============================================================
+# COUNT SOURCE ANOMALIES
+# ============================================================
+
+def count_source_anomalies(
+    source_name: str,
+    anomalies: List[Dict]
+) -> int:
+
+    count = 0
+
+    for anomaly in anomalies:
+
+        if not isinstance(anomaly, dict):
+            continue
+
+        if anomaly.get("source") == source_name:
+
+            count += 1
+
+    return count
+
+
+# ============================================================
+# GET SOURCE STATUS
+# ============================================================
+
+def get_source_status(
+    source_name: str,
+    total: int,
+    valid: int,
+    invalid: int,
+    anomalies: int
+) -> str:
+
+    # No records means the source could not currently
+    # provide usable data.
+
+    if total == 0:
+
+        return "failed"
+
+    # Invalid records are allowed, but if everything
+    # from a source was rejected, mark it failed.
+
+    if valid == 0 and invalid > 0:
+
+        return "failed"
+
+    # Anomalies do not automatically mean scraper failure.
+    #
+    # They are data-quality / market signals.
+
+    return "healthy"
+
+
+# ============================================================
+# GET SCRAPER SOURCES
 # ============================================================
 
 def get_scraper_sources() -> List[Dict]:
 
-    return SCRAPER_SOURCES
+    unified_data = load_unified_data()
+
+    invalid_data = load_invalid_data()
+
+    anomalies = load_price_anomalies()
+
+    sources = []
+
+    for source in SCRAPER_SOURCES:
+
+        name = source["name"]
+
+        raw_file = (
+            RAW_DIR
+            / source["file"]
+        )
+
+        total = len(
+            extract_records(
+                load_json(
+                    raw_file,
+                    []
+                )
+            )
+        )
+
+        valid = count_source_records(
+            name,
+            unified_data
+        )
+
+        invalid = count_invalid_source_records(
+            name,
+            invalid_data
+        )
+
+        source_anomalies = count_source_anomalies(
+            name,
+            anomalies
+        )
+
+        status = get_source_status(
+            name,
+            total,
+            valid,
+            invalid,
+            source_anomalies
+        )
+
+        sources.append({
+
+            "name": name,
+
+            "status": status,
+
+            "records": total,
+
+            "valid": valid,
+
+            "invalid": invalid,
+
+            "schema_warnings": 0,
+
+            "price_anomalies": source_anomalies,
+
+            "data_source": "Member 1 pipeline",
+
+            "file": source["file"],
+
+        })
+
+    return sources
+
+
+# ============================================================
+# CALCULATE HEALTH
+# ============================================================
+
+def get_scraper_health() -> Dict:
+
+    sources = get_scraper_sources()
+
+    total_sources = len(sources)
+
+    healthy = sum(
+        1
+        for source in sources
+        if source["status"] == "healthy"
+    )
+
+    failed = sum(
+        1
+        for source in sources
+        if source["status"] == "failed"
+    )
+
+    total_records = sum(
+        source["records"]
+        for source in sources
+    )
+
+    total_valid = sum(
+        source["valid"]
+        for source in sources
+    )
+
+    total_invalid = sum(
+        source["invalid"]
+        for source in sources
+    )
+
+    total_anomalies = sum(
+        source["price_anomalies"]
+        for source in sources
+    )
+
+    # Successful record percentage
+
+    if total_records > 0:
+
+        success_rate = round(
+            (
+                total_valid
+                / total_records
+            ) * 100,
+            2
+        )
+
+    else:
+
+        success_rate = 0.0
+
+    if failed == 0 and total_sources > 0:
+
+        overall_status = "healthy"
+
+    elif healthy > 0:
+
+        overall_status = "degraded"
+
+    else:
+
+        overall_status = "failed"
+
+    # At this stage Member 1 does not persist a
+    # self-healed counter in its output files.
+    #
+    # Therefore we intentionally report 0 instead
+    # of inventing a number.
+
+    self_healed = 0
+
+    # Use the newest available Member 1 output timestamp.
+
+    last_run = get_last_run_timestamp()
+
+    return {
+
+        "total_sources": total_sources,
+
+        "healthy": healthy,
+
+        "failed": failed,
+
+        "self_healed": self_healed,
+
+        "success_rate": success_rate,
+
+        "total_records": total_records,
+
+        "valid_records": total_valid,
+
+        "invalid_records": total_invalid,
+
+        "price_anomalies": total_anomalies,
+
+        "last_run": last_run,
+
+        "status": overall_status,
+
+        "data_source": "Member 1 Supply-WebShield pipeline",
+
+        "sources": sources,
+
+    }
+
+
+# ============================================================
+# FIND LAST RUN
+# ============================================================
+
+def get_last_run_timestamp() -> str:
+
+    timestamps = []
+
+    files_to_check = [
+
+        UNIFIED_DATA_FILE,
+
+        INVALID_DATA_FILE,
+
+        PRICE_ANOMALY_FILE,
+
+    ]
+
+    for file_path in files_to_check:
+
+        try:
+
+            if file_path.exists():
+
+                timestamps.append(
+                    datetime.fromtimestamp(
+                        file_path.stat().st_mtime,
+                        tz=timezone.utc
+                    )
+                )
+
+        except Exception:
+
+            pass
+
+    if not timestamps:
+
+        return datetime.now(
+            timezone.utc
+        ).isoformat()
+
+    latest = max(timestamps)
+
+    return latest.isoformat()
 
 
 # ============================================================
@@ -95,89 +527,9 @@ def get_scraper_sources() -> List[Dict]:
 
 def calculate_success_rate() -> float:
 
-    total_attempts = SCRAPER_STATE["total_attempts"]
+    health = get_scraper_health()
 
-    successful_requests = (
-        SCRAPER_STATE["successful_requests"]
-    )
-
-    if total_attempts == 0:
-        return 0.0
-
-    return round(
-        (successful_requests / total_attempts) * 100,
-        2
-    )
-
-
-# ============================================================
-# GET SCRAPER HEALTH
-# ============================================================
-
-def get_scraper_health() -> Dict:
-
-    success_rate = calculate_success_rate()
-
-    return {
-        "total_sources": SCRAPER_STATE["total_sources"],
-        "healthy": SCRAPER_STATE["healthy"],
-        "failed": SCRAPER_STATE["failed"],
-        "self_healed": SCRAPER_STATE["self_healed"],
-        "success_rate": success_rate,
-        "last_run": SCRAPER_STATE["last_run"],
-        "status": SCRAPER_STATE["status"]
-    }
-
-
-# ============================================================
-# SELF-HEAL FAILED SOURCE
-# ============================================================
-
-def self_heal_source(source_name: str) -> Dict:
-
-    for source in SCRAPER_SOURCES:
-
-        if source["name"] == source_name:
-
-            if source["status"] == "healthy":
-
-                return {
-                    "source": source_name,
-                    "status": "healthy",
-                    "message": "Source is already healthy",
-                    "healed": False
-                }
-
-            # Simulate self-healing
-            source["status"] = "healthy"
-
-            SCRAPER_STATE["failed"] -= 1
-
-            SCRAPER_STATE["healthy"] += 1
-
-            SCRAPER_STATE["self_healed"] += 1
-
-            SCRAPER_STATE["successful_requests"] += 1
-
-            SCRAPER_STATE["total_attempts"] += 1
-
-            SCRAPER_STATE["last_run"] = (
-                datetime.utcnow().isoformat()
-            )
-
-            return {
-                "source": source_name,
-                "status": "healthy",
-                "message": "Source successfully self-healed",
-                "healed": True
-            }
-
-    return {
-        "source": source_name,
-        "status": "not_found",
-        "message": "Scraper source not found",
-        "healed": False
-    }
+    return health["success_rate"]
 
 
 # ============================================================
@@ -186,14 +538,106 @@ def self_heal_source(source_name: str) -> Dict:
 
 def run_scraper() -> Dict:
 
-    SCRAPER_STATE["last_run"] = (
-        datetime.utcnow().isoformat()
-    )
+    """
+    The actual Member 1 pipeline is currently executed
+    separately through member1/supply-webshield/main.py.
+
+    This endpoint therefore reports the current pipeline
+    state instead of pretending to execute a scraper.
+    """
+
+    health = get_scraper_health()
 
     return {
-        "message": "Scraper execution completed",
-        "status": "completed",
-        "timestamp": SCRAPER_STATE["last_run"]
+
+        "message": (
+            "Member 1 scraper pipeline output "
+            "loaded successfully"
+        ),
+
+        "status": health["status"],
+
+        "timestamp": datetime.now(
+            timezone.utc
+        ).isoformat(),
+
+        "sources": health["total_sources"],
+
+        "records": health["total_records"],
+
+    }
+
+
+# ============================================================
+# SELF-HEAL SOURCE
+# ============================================================
+
+def self_heal_source(
+    source_name: str
+) -> Dict:
+
+    """
+    The actual Bright Data self-healing system lives
+    inside Member 1.
+
+    We do NOT simulate healing here.
+    """
+
+    sources = get_scraper_sources()
+
+    for source in sources:
+
+        if source["name"].lower() == source_name.lower():
+
+            if source["status"] == "healthy":
+
+                return {
+
+                    "source": source_name,
+
+                    "status": "healthy",
+
+                    "message": (
+                        "Source is currently healthy"
+                    ),
+
+                    "healed": False,
+
+                    "data_source": (
+                        "Member 1 Supply-WebShield"
+                    ),
+
+                }
+
+            return {
+
+                "source": source_name,
+
+                "status": "failed",
+
+                "message": (
+                    "Source requires Member 1 "
+                    "self-healing controller"
+                ),
+
+                "healed": False,
+
+                "data_source": (
+                    "Member 1 Supply-WebShield"
+                ),
+
+            }
+
+    return {
+
+        "source": source_name,
+
+        "status": "not_found",
+
+        "message": "Scraper source not found",
+
+        "healed": False,
+
     }
 
 
@@ -206,11 +650,53 @@ def get_scraper_summary() -> Dict:
     health = get_scraper_health()
 
     return {
-        "total_sources": health["total_sources"],
-        "healthy": health["healthy"],
-        "failed": health["failed"],
-        "self_healed": health["self_healed"],
-        "success_rate": health["success_rate"],
-        "status": health["status"],
-        "last_run": health["last_run"]
+
+        "total_sources": health[
+            "total_sources"
+        ],
+
+        "healthy": health[
+            "healthy"
+        ],
+
+        "failed": health[
+            "failed"
+        ],
+
+        "self_healed": health[
+            "self_healed"
+        ],
+
+        "success_rate": health[
+            "success_rate"
+        ],
+
+        "total_records": health[
+            "total_records"
+        ],
+
+        "valid_records": health[
+            "valid_records"
+        ],
+
+        "invalid_records": health[
+            "invalid_records"
+        ],
+
+        "price_anomalies": health[
+            "price_anomalies"
+        ],
+
+        "status": health[
+            "status"
+        ],
+
+        "last_run": health[
+            "last_run"
+        ],
+
+        "sources": health[
+            "sources"
+        ],
+
     }

@@ -1,15 +1,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime
+from datetime import datetime, timezone
 import sqlite3
 import os
-import json
 
 
 # =========================================================
 # SUPPLYSHIELD AI - FASTAPI BACKEND
-# DATABASE INTEGRATION
 # =========================================================
+#
+# Integrates:
+#   Member 1 -> Supply-WebShield / Scraper
+#   Member 2 -> SQLite / Risk Engine
+#   Frontend  -> React dashboard
+#
+# =========================================================
+
 
 app = FastAPI(
     title="SupplyShield AI API",
@@ -68,7 +74,9 @@ app.add_middleware(
     ],
 
     allow_credentials=True,
+
     allow_methods=["*"],
+
     allow_headers=["*"],
 )
 
@@ -85,7 +93,7 @@ def home():
         "status": "online",
         "version": "1.0.0",
         "database": "Member 2 SQLite",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -99,7 +107,7 @@ def health():
     return {
         "status": "healthy",
         "backend": "online",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -176,7 +184,9 @@ def system_status():
 
         "database": database,
 
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(
+            timezone.utc
+        ).isoformat()
     }
 
 
@@ -207,8 +217,9 @@ def get_risk():
         FROM integrated_risk
     """).fetchone()
 
-
+    # -----------------------------------------------------
     # Risk category counts
+    # -----------------------------------------------------
 
     high_risk = conn.execute("""
         SELECT COUNT(*)
@@ -217,7 +228,6 @@ def get_risk():
 
         WHERE unified_risk >= 70
     """).fetchone()[0]
-
 
     medium_risk = conn.execute("""
         SELECT COUNT(*)
@@ -228,7 +238,6 @@ def get_risk():
         AND unified_risk < 70
     """).fetchone()[0]
 
-
     low_risk = conn.execute("""
         SELECT COUNT(*)
 
@@ -237,11 +246,11 @@ def get_risk():
         WHERE unified_risk < 40
     """).fetchone()[0]
 
-
-    # Generate alerts from database
+    # -----------------------------------------------------
+    # Generate alerts
+    # -----------------------------------------------------
 
     alerts = []
-
 
     price_anomaly_count = conn.execute("""
         SELECT COUNT(*)
@@ -251,7 +260,6 @@ def get_risk():
         WHERE price_anomaly > 0
     """).fetchone()[0]
 
-
     supplier_risk_count = conn.execute("""
         SELECT COUNT(*)
 
@@ -259,7 +267,6 @@ def get_risk():
 
         WHERE seller_risk > 0
     """).fetchone()[0]
-
 
     anomaly_count = conn.execute("""
         SELECT COUNT(*)
@@ -269,13 +276,11 @@ def get_risk():
         WHERE anomaly_risk > 0
     """).fetchone()[0]
 
-
     if price_anomaly_count > 0:
 
         alerts.append(
             "Price anomaly detected"
         )
-
 
     if supplier_risk_count > 0:
 
@@ -283,16 +288,17 @@ def get_risk():
             "Supplier identity information missing"
         )
 
-
     if anomaly_count > 0:
 
         alerts.append(
             "Availability risk signal detected"
         )
 
-
     conn.close()
 
+    # -----------------------------------------------------
+    # Calculate values
+    # -----------------------------------------------------
 
     overall_risk = round(
         summary["overall_risk"] or 0,
@@ -319,8 +325,9 @@ def get_risk():
         2
     )
 
-
+    # -----------------------------------------------------
     # Risk level
+    # -----------------------------------------------------
 
     if overall_risk >= 70:
 
@@ -333,7 +340,6 @@ def get_risk():
     else:
 
         risk_level = "LOW"
-
 
     return {
 
@@ -377,7 +383,6 @@ def get_suppliers():
 
     conn = get_db_connection()
 
-
     rows = conn.execute("""
         SELECT
 
@@ -402,12 +407,9 @@ def get_suppliers():
         LIMIT 20
     """).fetchall()
 
-
     conn.close()
 
-
     suppliers = []
-
 
     for row in rows:
 
@@ -415,7 +417,6 @@ def get_suppliers():
             row["risk"] or 0,
             2
         )
-
 
         if risk >= 70:
 
@@ -429,7 +430,6 @@ def get_suppliers():
 
             status = "LOW"
 
-
         suppliers.append({
 
             "name":
@@ -441,11 +441,8 @@ def get_suppliers():
             "status": status
         })
 
-
     return {
-
         "suppliers": suppliers
-
     }
 
 
@@ -458,7 +455,6 @@ def get_webshield():
 
     conn = get_db_connection()
 
-
     suspicious_listings = conn.execute("""
         SELECT COUNT(*)
 
@@ -466,7 +462,6 @@ def get_webshield():
 
         WHERE webshield_risk > 40
     """).fetchone()[0]
-
 
     price_anomalies = conn.execute("""
         SELECT COUNT(*)
@@ -476,7 +471,6 @@ def get_webshield():
         WHERE price_anomaly > 0
     """).fetchone()[0]
 
-
     counterfeit_risks = conn.execute("""
         SELECT COUNT(*)
 
@@ -484,7 +478,6 @@ def get_webshield():
 
         WHERE counterfeit_risk > 0
     """).fetchone()[0]
-
 
     supplier_web_alerts = conn.execute("""
         SELECT COUNT(*)
@@ -494,16 +487,13 @@ def get_webshield():
         WHERE seller_risk > 0
     """).fetchone()[0]
 
-
     average_webshield = conn.execute("""
         SELECT AVG(webshield_risk)
 
         FROM integrated_risk
     """).fetchone()[0]
 
-
     conn.close()
-
 
     return {
 
@@ -530,41 +520,72 @@ def get_webshield():
 # =========================================================
 # SCRAPER HEALTH
 # =========================================================
+#
+# IMPORTANT:
+#
+# This endpoint reads REAL Member 1 data from:
+#
+# member1/
+#   supply-webshield/
+#       data/
+#           raw/
+#           processed/
+#           rejected/
+#
+# It does NOT create fake scraper statistics.
+#
+# =========================================================
 
 @app.get("/api/scraper-health")
 def scraper_health():
 
-    conn = get_db_connection()
+    try:
 
+        from backend.services.scraper_service import (
+            get_scraper_health
+        )
 
-    records = conn.execute("""
-        SELECT COUNT(*)
+        health = get_scraper_health()
 
-        FROM integrated_risk
-    """).fetchone()[0]
+        return health
 
+    except Exception as error:
 
-    conn.close()
+        print(
+            f"[SCRAPER HEALTH ERROR] {error}"
+        )
 
+        return {
 
-    # Database-backed scraper status.
-    # Actual source-health information can be
-    # connected later if a scraper-status table exists.
+            "total_sources": 0,
 
-    return {
+            "healthy": 0,
 
-        "total_sources": 1,
+            "failed": 0,
 
-        "healthy": 1,
+            "self_healed": 0,
 
-        "failed": 0,
+            "success_rate": 0,
 
-        "self_healed": 0,
+            "total_records": 0,
 
-        "records_processed": records,
+            "valid_records": 0,
 
-        "status": "healthy"
-    }
+            "invalid_records": 0,
+
+            "price_anomalies": 0,
+
+            "last_run": None,
+
+            "status": "unavailable",
+
+            "data_source":
+                "Member 1 Supply-WebShield pipeline",
+
+            "sources": [],
+
+            "error": str(error)
+        }
 
 
 # =========================================================
@@ -574,50 +595,149 @@ def scraper_health():
 @app.get("/api/scraper-sources")
 def scraper_sources():
 
-    conn = get_db_connection()
+    try:
+
+        from backend.services.scraper_service import (
+            get_scraper_sources
+        )
+
+        sources = get_scraper_sources()
+
+        return {
+            "sources": sources
+        }
+
+    except Exception as error:
+
+        print(
+            f"[SCRAPER SOURCES ERROR] {error}"
+        )
+
+        return {
+
+            "sources": [],
+
+            "error": str(error)
+        }
 
 
-    rows = conn.execute("""
-        SELECT
+# =========================================================
+# SCRAPER SUMMARY
+# =========================================================
 
-            source,
+@app.get("/api/scraper-summary")
+def scraper_summary():
 
-            COUNT(*) AS records
+    try:
 
-        FROM integrated_risk
+        from backend.services.scraper_service import (
+            get_scraper_summary
+        )
 
-        GROUP BY source
+        return get_scraper_summary()
 
-        ORDER BY records DESC
-    """).fetchall()
+    except Exception as error:
+
+        print(
+            f"[SCRAPER SUMMARY ERROR] {error}"
+        )
+
+        return {
+
+            "total_sources": 0,
+
+            "healthy": 0,
+
+            "failed": 0,
+
+            "self_healed": 0,
+
+            "success_rate": 0,
+
+            "total_records": 0,
+
+            "valid_records": 0,
+
+            "invalid_records": 0,
+
+            "price_anomalies": 0,
+
+            "status": "unavailable",
+
+            "sources": [],
+
+            "error": str(error)
+        }
 
 
-    conn.close()
+# =========================================================
+# RUN SCRAPER
+# =========================================================
+
+@app.post("/api/run-scraper")
+def run_scraper():
+
+    try:
+
+        from backend.services.scraper_service import (
+            run_scraper
+        )
+
+        return run_scraper()
+
+    except Exception as error:
+
+        print(
+            f"[RUN SCRAPER ERROR] {error}"
+        )
+
+        return {
+
+            "status": "error",
+
+            "message":
+                "Unable to read Member 1 scraper pipeline",
+
+            "error": str(error)
+        }
 
 
-    sources = []
+# =========================================================
+# SELF-HEAL SOURCE
+# =========================================================
 
+@app.post("/api/self-heal/{source_name}")
+def self_heal(source_name: str):
 
-    for row in rows:
+    try:
 
-        sources.append({
+        from backend.services.scraper_service import (
+            self_heal_source
+        )
 
-            "source":
-                row["source"],
+        return self_heal_source(
+            source_name
+        )
 
-            "records":
-                row["records"],
+    except Exception as error:
 
-            "status":
-                "healthy"
-        })
+        print(
+            f"[SELF HEAL ERROR] {error}"
+        )
 
+        return {
 
-    return {
+            "source": source_name,
 
-        "sources": sources
+            "status": "error",
 
-    }
+            "message":
+                "Unable to communicate with Member 1 self-healing service",
+
+            "healed": False,
+
+            "error": str(error)
+        }
 
 
 # =========================================================
@@ -628,7 +748,6 @@ def scraper_sources():
 def market_intelligence():
 
     conn = get_db_connection()
-
 
     row = conn.execute("""
         SELECT
@@ -642,21 +761,17 @@ def market_intelligence():
         FROM integrated_risk
     """).fetchone()
 
-
     conn.close()
-
 
     market_risk = round(
         row["market_risk"] or 0,
         2
     )
 
-
     price_anomaly = round(
         row["price_anomaly"] or 0,
         2
     )
-
 
     if market_risk >= 70:
 
@@ -669,7 +784,6 @@ def market_intelligence():
     else:
 
         status = "normal"
-
 
     return {
 
@@ -704,7 +818,6 @@ def get_alerts():
 
     conn = get_db_connection()
 
-
     price_count = conn.execute("""
         SELECT COUNT(*)
 
@@ -712,7 +825,6 @@ def get_alerts():
 
         WHERE price_anomaly > 0
     """).fetchone()[0]
-
 
     counterfeit_count = conn.execute("""
         SELECT COUNT(*)
@@ -722,7 +834,6 @@ def get_alerts():
         WHERE counterfeit_risk > 0
     """).fetchone()[0]
 
-
     anomaly_count = conn.execute("""
         SELECT COUNT(*)
 
@@ -731,12 +842,9 @@ def get_alerts():
         WHERE anomaly_risk > 0
     """).fetchone()[0]
 
-
     conn.close()
 
-
     alerts = []
-
 
     if price_count > 0:
 
@@ -752,7 +860,6 @@ def get_alerts():
                 "Market"
         })
 
-
     if counterfeit_count > 0:
 
         alerts.append({
@@ -766,7 +873,6 @@ def get_alerts():
             "category":
                 "WebShield"
         })
-
 
     if anomaly_count > 0:
 
@@ -782,20 +888,17 @@ def get_alerts():
                 "Supply"
         })
 
-
     high_count = sum(
         1
         for alert in alerts
         if alert["severity"] == "HIGH"
     )
 
-
     warning_count = sum(
         1
         for alert in alerts
         if alert["severity"] == "MEDIUM"
     )
-
 
     return {
 
@@ -822,7 +925,6 @@ def risk_trend():
 
     conn = get_db_connection()
 
-
     rows = conn.execute("""
         SELECT
 
@@ -837,14 +939,11 @@ def risk_trend():
         ORDER BY day
     """).fetchall()
 
-
     conn.close()
-
 
     labels = []
 
     values = []
-
 
     for row in rows:
 
@@ -859,16 +958,13 @@ def risk_trend():
             )
         )
 
-
-    # If only one processing date exists,
-    # return that date instead of fake weekly data.
+    # Do not generate fake historical data.
 
     if not labels:
 
         labels = ["Current"]
 
         values = [0]
-
 
     return {
 
@@ -889,7 +985,6 @@ def supplier_summary():
 
     conn = get_db_connection()
 
-
     total = conn.execute("""
         SELECT COUNT(
             DISTINCT COALESCE(
@@ -901,13 +996,13 @@ def supplier_summary():
         FROM integrated_risk
     """).fetchone()[0]
 
-
     high = conn.execute("""
         SELECT COUNT(*)
 
         FROM (
 
             SELECT
+
                 COALESCE(
                     NULLIF(supplier, ''),
                     company
@@ -923,13 +1018,13 @@ def supplier_summary():
         )
     """).fetchone()[0]
 
-
     medium = conn.execute("""
         SELECT COUNT(*)
 
         FROM (
 
             SELECT
+
                 COALESCE(
                     NULLIF(supplier, ''),
                     company
@@ -946,13 +1041,13 @@ def supplier_summary():
         )
     """).fetchone()[0]
 
-
     low = conn.execute("""
         SELECT COUNT(*)
 
         FROM (
 
             SELECT
+
                 COALESCE(
                     NULLIF(supplier, ''),
                     company
@@ -968,16 +1063,13 @@ def supplier_summary():
         )
     """).fetchone()[0]
 
-
     average = conn.execute("""
         SELECT AVG(unified_risk)
 
         FROM integrated_risk
     """).fetchone()[0]
 
-
     conn.close()
-
 
     return {
 
@@ -1008,8 +1100,15 @@ def supplier_summary():
 @app.get("/api/records")
 def get_records(limit: int = 50):
 
-    conn = get_db_connection()
+    # Protect the API from unreasonable limits.
 
+    if limit < 1:
+        limit = 1
+
+    if limit > 500:
+        limit = 500
+
+    conn = get_db_connection()
 
     rows = conn.execute("""
         SELECT *
@@ -1021,19 +1120,15 @@ def get_records(limit: int = 50):
         LIMIT ?
     """, (limit,)).fetchall()
 
-
     conn.close()
 
-
     records = []
-
 
     for row in rows:
 
         records.append(
             dict(row)
         )
-
 
     return {
 
@@ -1074,7 +1169,10 @@ async def startup_event():
 
     print("Database       : MEMBER 2 SQLITE")
 
-    print("Database Path  :", DATABASE_PATH)
+    print(
+        "Database Path  :",
+        DATABASE_PATH
+    )
 
     print("CORS           : ENABLED")
 
