@@ -18,6 +18,24 @@ app = FastAPI(
 )
 
 
+
+# =========================================================
+# SCRAPER HEALTH FILE
+# =========================================================
+
+SCRAPER_HEALTH_FILE = os.path.join(
+    os.path.dirname(
+        os.path.dirname(
+            os.path.abspath(__file__)
+        )
+    ),
+    "data",
+    "processed",
+    "scraper health.json"
+)
+
+
+
 # =========================================================
 # DATABASE CONFIGURATION
 # =========================================================
@@ -534,38 +552,39 @@ def get_webshield():
 @app.get("/api/scraper-health")
 def scraper_health():
 
-    conn = get_db_connection()
+    try:
 
+        with open(
+            SCRAPER_HEALTH_FILE,
+            "r",
+            encoding="utf-8"
+        ) as file:
 
-    records = conn.execute("""
-        SELECT COUNT(*)
+            data = json.load(file)
 
-        FROM integrated_risk
-    """).fetchone()[0]
+        return data
 
+    except FileNotFoundError:
 
-    conn.close()
+        return {
+            "status": "error",
+            "message": "Scraper health file not found",
+            "file": SCRAPER_HEALTH_FILE
+        }
 
+    except json.JSONDecodeError:
 
-    # Database-backed scraper status.
-    # Actual source-health information can be
-    # connected later if a scraper-status table exists.
+        return {
+            "status": "error",
+            "message": "Scraper health JSON is invalid"
+        }
 
-    return {
+    except Exception as error:
 
-        "total_sources": 1,
-
-        "healthy": 1,
-
-        "failed": 0,
-
-        "self_healed": 0,
-
-        "records_processed": records,
-
-        "status": "healthy"
-    }
-
+        return {
+            "status": "error",
+            "message": str(error)
+        }
 
 # =========================================================
 # SCRAPER SOURCES
