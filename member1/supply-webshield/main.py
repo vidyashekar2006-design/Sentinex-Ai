@@ -7,6 +7,11 @@ from anomaly_detector import detect_price_anomalies
 from schema_guard import check_schema
 from heal_rules import should_trigger_healing
 from heal_call import call_self_healing
+from self_healing_service import (
+    load_state,
+    mark_healing_required,
+    reset_to_idle
+)
 
 
 # ==================================================
@@ -394,17 +399,49 @@ def main():
     print("SELF-HEALING CHECK")
     print("=" * 60)
 
+
+        # ==================================================
+# SELF-HEALING STATE
+# ==================================================
+
     if healing_needed:
 
-        print("⚠️ SELF-HEALING RECOMMENDED")
+        print("\n⚠️ SELF-HEALING RECOMMENDED")
         print(f"Reason: {healing_reason}")
-        print("Run heal_call.py separetely to start the healing process.")
+
+        healing_state= mark_healing_required(
+        reason=healing_reason
+    )
 
     else:
 
-        print("✅ SCRAPER HEALTHY")
-        print(f"Reason: {healing_reason}")    
+      print("\n✅ SCRAPER HEALTHY")
+      print(f"Reason: {healing_reason}")
 
+      existing_state = load_state()
+
+    # Preserve a real healing history.
+    # A normal healthy run must NOT erase a
+    # previously recorded successful healing.
+    if existing_state.get("status") == "healed":
+
+        healing_state = existing_state
+
+    else:
+
+        healing_state = reset_to_idle()
+
+    print(
+    "\nSelf-healing state:"
+)
+
+    print(
+    json.dumps(
+        healing_state,
+        indent=2,
+        ensure_ascii=False
+    )
+)
 
         # ==================================================
     # SAVE SCRAPER HEALTH REPORT
@@ -423,9 +460,15 @@ def main():
         "price_anomalies": len(price_anomalies),
 
         "self_healing": {
-            "needed": healing_needed,
-            "reason": healing_reason
-        },
+    "needed": healing_needed,
+    "reason": healing_reason,
+    "status": healing_state["status"],
+    "source": healing_state["source"],
+    "healing_started_at": healing_state["healing_started_at"],
+    "repair_ready_at": healing_state["repair_ready_at"],
+    "healed_at": healing_state["healed_at"],
+    "self_healed_count": healing_state["self_healed_count"]
+},
 
         "sources": source_stats
     }

@@ -35,3 +35,13 @@ member2/outputs/*.json
 
 # Production environment variables
 frontend/.env.production
+
+# Runtime self-healing state
+member1/supply-webshield/data/processed/self_healing_status.json
+
+# Generated Supply WebShield runtime data
+member1/supply-webshield/data/processed/*.json
+member1/supply-webshield/data/rejected/*.json
+
+# Runtime self-healing state
+member1/supply-webshield/data/processed/self_healing_status.json

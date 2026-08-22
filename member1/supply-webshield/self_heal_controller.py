@@ -3,6 +3,11 @@ import time
 import requests
 from dotenv import load_dotenv
 
+from self_healing_service import (
+    mark_repair_requested,
+    mark_repair_ready
+)
+
 load_dotenv()
 
 API_TOKEN = os.getenv("BRIGHTDATA_API_TOKEN")
@@ -40,6 +45,8 @@ def start_refactor(prompt):
     print("Refactor Response:", response.text)
 
     response.raise_for_status()
+
+    mark_repair_requested()
 
     return response
 
@@ -90,6 +97,7 @@ def wait_for_refactor():
 
         if status == "pending_answer":
             print("\n✅ Refactor is ready for approval.")
+            mark_repair_ready()
             return True
 
         if status == "error":

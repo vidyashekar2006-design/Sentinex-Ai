@@ -16,6 +16,10 @@ import {
   X,
   ChevronRight,
   Sparkles,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  ShieldAlert,
 } from "lucide-react";
 
 import ScraperHealth from "./components/ScraperHealth";
@@ -75,6 +79,15 @@ interface ScraperData {
   status: string;
   data_source?: string;
   sources?: ScraperSource[];
+    self_healing?: {
+    status: string;
+    source: string | null;
+    reason: string | null;
+    healing_started_at: string | null;
+    repair_ready_at: string | null;
+    healed_at: string | null;
+    self_healed_count: number;
+  };
 }
 
 interface NavItem {
@@ -132,6 +145,9 @@ const API_BASE_URL =
 
 function App() {
   const [sidebarOpen, setSidebarOpen] =
+    useState(false);
+
+  const [notificationOpen, setNotificationOpen] =
     useState(false);
 
   const [activePage, setActivePage] =
@@ -265,14 +281,44 @@ function App() {
               : "unknown",
 
           data_source:
-            scraperData?.data_source,
+  scraperData?.data_source,
 
-          sources:
-            Array.isArray(
-              scraperData?.sources
-            )
-              ? scraperData.sources
-              : [],
+sources:
+  Array.isArray(
+    scraperData?.sources
+  )
+    ? scraperData.sources
+    : [],
+
+self_healing:
+  scraperData?.self_healing
+    ? {
+        status:
+          typeof scraperData.self_healing.status === "string"
+            ? scraperData.self_healing.status
+            : "idle",
+
+        source:
+          scraperData.self_healing.source ?? null,
+
+        reason:
+          scraperData.self_healing.reason ?? null,
+
+        healing_started_at:
+          scraperData.self_healing.healing_started_at ?? null,
+
+        repair_ready_at:
+          scraperData.self_healing.repair_ready_at ?? null,
+
+        healed_at:
+          scraperData.self_healing.healed_at ?? null,
+
+        self_healed_count:
+          Number(
+            scraperData.self_healing.self_healed_count ?? 0
+          ),
+      }
+    : undefined,
         };
 
         setScraper(
@@ -478,6 +524,96 @@ function App() {
     }
 
     return "risk-low";
+  };
+
+  // =======================================================
+  // NOTIFICATIONS (derived from existing live state only)
+  // =======================================================
+
+  interface AlertItem {
+    id: string;
+    severity: "critical" | "warning" | "info";
+    icon: typeof AlertTriangle;
+    message: string;
+  }
+
+  const alerts: AlertItem[] = [];
+
+  if (scraper && scraper.failed > 0) {
+    alerts.push({
+      id: "scraper-failed",
+      severity: "critical",
+      icon: XCircle,
+      message: `${scraper.failed} scraper source${
+        scraper.failed === 1 ? "" : "s"
+      } failing`,
+    });
+  }
+
+  if (scraper && scraper.self_healed > 0) {
+    alerts.push({
+      id: "scraper-self-healed",
+      severity: "info",
+      icon: CheckCircle2,
+      message: `${scraper.self_healed} source${
+        scraper.self_healed === 1 ? "" : "s"
+      } self-healed`,
+    });
+  }
+
+  if (webshield && webshield.supplier_web_alerts > 0) {
+    alerts.push({
+      id: "webshield-supplier-alerts",
+      severity: "warning",
+      icon: ShieldAlert,
+      message: `${webshield.supplier_web_alerts} supplier web alert${
+        webshield.supplier_web_alerts === 1 ? "" : "s"
+      }`,
+    });
+  }
+
+  if (webshield && webshield.price_anomalies > 0) {
+    alerts.push({
+      id: "webshield-price-anomalies",
+      severity: "warning",
+      icon: AlertTriangle,
+      message: `${webshield.price_anomalies} price anomal${
+        webshield.price_anomalies === 1 ? "y" : "ies"
+      } detected`,
+    });
+  }
+
+  if (webshield && webshield.suspicious_listings > 0) {
+    alerts.push({
+      id: "webshield-suspicious-listings",
+      severity: "warning",
+      icon: AlertTriangle,
+      message: `${webshield.suspicious_listings} suspicious listing${
+        webshield.suspicious_listings === 1 ? "" : "s"
+      } detected`,
+    });
+  }
+
+  if (risk && risk.risk_level === "HIGH") {
+    alerts.push({
+      id: "risk-high",
+      severity: "critical",
+      icon: AlertTriangle,
+      message: "Overall risk level is HIGH",
+    });
+  }
+
+  if (risk && risk.risk_level === "MEDIUM") {
+    alerts.push({
+      id: "risk-medium",
+      severity: "warning",
+      icon: AlertTriangle,
+      message: "Overall risk level is MEDIUM",
+    });
+  }
+
+  const toggleNotifications = () => {
+    setNotificationOpen((prev) => !prev);
   };
 
   // =======================================================
@@ -1427,16 +1563,97 @@ function App() {
 
             {/* NOTIFICATIONS */}
 
-            <button
-              className="icon-button"
-              aria-label="Notifications"
-            >
+            <div className="notification-wrapper">
 
-              <Bell size={19} />
+              <button
+                className="icon-button"
+                aria-label={
+                  alerts.length > 0
+                    ? `Notifications, ${alerts.length} active alert${
+                        alerts.length === 1 ? "" : "s"
+                      }`
+                    : "Notifications, no active alerts"
+                }
+                aria-expanded={notificationOpen}
+                aria-haspopup="true"
+                onClick={toggleNotifications}
+              >
 
-              <span className="notification-dot" />
+                <Bell size={19} />
 
-            </button>
+                {alerts.length > 0 && (
+                  <span className="notification-dot" />
+                )}
+
+              </button>
+
+              {notificationOpen && (
+
+                <div
+                  className="notification-panel"
+                  role="menu"
+                >
+
+                  <div className="notification-panel-header">
+
+                    <strong>
+                      Notifications
+                    </strong>
+
+                    <span
+                      className={
+                        alerts.length > 0
+                          ? "notification-count notification-count-active"
+                          : "notification-count"
+                      }
+                    >
+                      {alerts.length}
+                    </span>
+
+                  </div>
+
+                  <div className="notification-panel-body">
+
+                    {alerts.length > 0 ? (
+                      alerts.map((alert) => {
+
+                        const AlertIcon = alert.icon;
+
+                        return (
+                          <div
+                            className={`notification-item notification-${alert.severity}`}
+                            key={alert.id}
+                            role="menuitem"
+                          >
+
+                            <AlertIcon size={16} />
+
+                            <span>
+                              {alert.message}
+                            </span>
+
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="notification-item notification-healthy">
+
+                        <CheckCircle2 size={16} />
+
+                        <span>
+                          No active alerts
+                        </span>
+
+                      </div>
+                    )}
+
+                  </div>
+
+                </div>
+
+              )}
+
+            </div>
 
             {/* PROFILE */}
 

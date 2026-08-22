@@ -58,6 +58,11 @@ PRICE_ANOMALY_FILE = (
     / "price_anomalies.json"
 )
 
+SELF_HEALING_STATUS_FILE = (
+    PROCESSED_DIR
+    / "self_healing_status.json"
+)
+
 
 # ============================================================
 # REAL MEMBER 1 SOURCES
@@ -163,6 +168,22 @@ def load_price_anomalies() -> List[Dict]:
     )
 
     return extract_records(data)
+
+def load_self_healing_status() -> Dict:
+    """
+    Load the real persistent self-healing state
+    produced by Member 1.
+    """
+
+    data = load_json(
+        SELF_HEALING_STATUS_FILE,
+        {}
+    )
+
+    if not isinstance(data, dict):
+        return {}
+
+    return data
 
 
 # ============================================================
@@ -432,13 +453,19 @@ def get_scraper_health() -> Dict:
 
         overall_status = "failed"
 
-    # At this stage Member 1 does not persist a
-    # self-healed counter in its output files.
-    #
-    # Therefore we intentionally report 0 instead
-    # of inventing a number.
+    # -----------------------------------------------------
+# REAL SELF-HEALING STATE
+# -----------------------------------------------------
 
-    self_healed = 0
+    self_healing_state = load_self_healing_status()
+
+    self_healed = self_healing_state.get(
+    "self_healed_count",
+    0
+)
+
+    if not isinstance(self_healed, int):
+       self_healed = 0
 
     # Use the newest available Member 1 output timestamp.
 
@@ -453,6 +480,32 @@ def get_scraper_health() -> Dict:
         "failed": failed,
 
         "self_healed": self_healed,
+
+        "self_healing": {
+    "status": self_healing_state.get(
+        "status",
+        "idle"
+    ),
+    "source": self_healing_state.get(
+        "source"
+    ),
+    "reason": self_healing_state.get(
+        "reason"
+    ),
+    "healing_started_at": self_healing_state.get(
+        "healing_started_at"
+    ),
+    "repair_ready_at": self_healing_state.get(
+        "repair_ready_at"
+    ),
+    "healed_at": self_healing_state.get(
+        "healed_at"
+    ),
+    "self_healed_count": self_healing_state.get(
+        "self_healed_count",
+        0
+    )
+},
 
         "success_rate": success_rate,
 

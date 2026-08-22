@@ -34,6 +34,16 @@ interface ScraperData {
   status: string;
   data_source?: string;
   sources?: ScraperSource[];
+
+  self_healing?: {
+    status: string;
+    source: string | null;
+    reason: string | null;
+    healing_started_at: string | null;
+    repair_ready_at: string | null;
+    healed_at: string | null;
+    self_healed_count: number;
+  };
 }
 
 interface Props {
@@ -297,7 +307,192 @@ function ScraperHealth({ data }: Props) {
 
       </div>
 
+             {/* =====================================================
+          SELF-HEALING ENGINE
+      ===================================================== */}
 
+      <div
+        style={{
+          marginTop: "18px",
+          padding: "16px",
+          borderRadius: "12px",
+          background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.08)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "12px",
+            marginBottom: "14px",
+          }}
+        >
+          <div>
+            <strong>Self-Healing Engine</strong>
+
+            <p
+              style={{
+                margin: "4px 0 0",
+                fontSize: "12px",
+                opacity: 0.65,
+              }}
+            >
+              Bright Data assisted scraper recovery
+            </p>
+          </div>
+
+          {(() => {
+            const healingStatus =
+              data.self_healing?.status || "idle";
+
+            if (healingStatus === "healed") {
+              return <CheckCircle2 size={20} />;
+            }
+
+            if (
+              healingStatus === "healing_required" ||
+              healingStatus === "repair_requested"
+            ) {
+              return <AlertTriangle size={20} />;
+            }
+
+            if (healingStatus === "repair_ready") {
+              return <RotateCcw size={20} />;
+            }
+
+            return <Activity size={20} />;
+          })()}
+        </div>
+
+        {(() => {
+          const healing =
+            data.self_healing;
+
+          const status =
+            healing?.status || "idle";
+
+          const statusLabel = {
+            idle: "MONITORING",
+            healing_required: "HEALING REQUIRED",
+            repair_requested: "REPAIR REQUESTED",
+            repair_ready: "REPAIR READY",
+            healed: "HEALED",
+          }[status] || status.toUpperCase();
+
+          const statusDescription = {
+            idle:
+              "All scraper sources are operating normally.",
+            healing_required:
+              "A scraper degradation condition has been detected.",
+            repair_requested:
+              "Bright Data has been contacted for an AI repair.",
+            repair_ready:
+              "Bright Data generated a repair. Review is required before recovery.",
+            healed:
+              "The repaired scraper completed recovery validation.",
+          }[status] || "Self-healing state is being monitored.";
+
+          return (
+            <>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  marginBottom: "10px",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  {statusLabel}
+                </span>
+
+                <span
+                  style={{
+                    fontSize: "11px",
+                    opacity: 0.55,
+                  }}
+                >
+                  {healing?.self_healed_count || 0} recoveries
+                </span>
+              </div>
+
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "12px",
+                  opacity: 0.7,
+                  lineHeight: 1.5,
+                }}
+              >
+                {statusDescription}
+              </p>
+
+              {healing?.source && (
+                <div
+                  style={{
+                    marginTop: "12px",
+                    fontSize: "12px",
+                  }}
+                >
+                  <strong>Source:</strong>{" "}
+                  {healing.source}
+                </div>
+              )}
+
+              {healing?.reason && (
+                <div
+                  style={{
+                    marginTop: "6px",
+                    fontSize: "12px",
+                    opacity: 0.7,
+                  }}
+                >
+                  <strong>Reason:</strong>{" "}
+                  {healing.reason}
+                </div>
+              )}
+
+              {healing?.repair_ready_at && (
+                <div
+                  style={{
+                    marginTop: "6px",
+                    fontSize: "11px",
+                    opacity: 0.55,
+                  }}
+                >
+                  Repair ready:{" "}
+                  {new Date(
+                    healing.repair_ready_at
+                  ).toLocaleString()}
+                </div>
+              )}
+
+              {healing?.healed_at && (
+                <div
+                  style={{
+                    marginTop: "6px",
+                    fontSize: "11px",
+                    opacity: 0.55,
+                  }}
+                >
+                  Last recovery:{" "}
+                  {new Date(
+                    healing.healed_at
+                  ).toLocaleString()}
+                </div>
+              )}
+            </>
+          );
+        })()}
+      </div>
       {/* =====================================================
           SOURCE STATUS
       ===================================================== */}
