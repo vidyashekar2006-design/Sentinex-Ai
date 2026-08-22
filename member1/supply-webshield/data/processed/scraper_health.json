@@ -1,0 +1,34 @@
+{
+  "status": "healthy",
+  "reason": "Scraper appears healthy.",
+  "total_records": 305,
+  "valid_records": 303,
+  "invalid_records": 2,
+  "schema_warnings": 0,
+  "duplicate_urls": 0,
+  "price_anomalies": 54,
+  "self_healing": {
+    "needed": false,
+    "reason": "Scraper appears healthy."
+  },
+  "sources": {
+    "DeoDap": {
+      "total": 16,
+      "valid": 16,
+      "invalid": 0,
+      "schema_warnings": 0
+    },
+    "TradeIndia": {
+      "total": 249,
+      "valid": 247,
+      "invalid": 2,
+      "schema_warnings": 0
+    },
+    "Meesho": {
+      "total": 40,
+      "valid": 40,
+      "invalid": 0,
+      "schema_warnings": 0
+    }
+  }
+}

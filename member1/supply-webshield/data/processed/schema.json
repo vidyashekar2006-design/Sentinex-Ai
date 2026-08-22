@@ -1,0 +1,17 @@
+{
+  "source": "string",
+  "title": "string",
+  "company": "string",
+  "supplier": "string | null",
+  "product": "string",
+  "event": "string | null",
+  "location": "string | null",
+  "price": "number | null",
+  "currency": "string | null",
+  "availability": "string | null",
+  "rating": "number | null",
+  "review": "string | null",
+  "date": "string | null",
+  "url": "string",
+  "timestamp": "string | null"
+}

@@ -1,0 +1,37 @@
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Vite
+frontend/.vite/
+frontend/vite-error.txt
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python generated files
+*.pkl
+*.pyc
+# Generated pipeline outputs
+member2/outputs/*.csv
+member2/outputs/*.json
+
+# Production environment variables
+frontend/.env.production
