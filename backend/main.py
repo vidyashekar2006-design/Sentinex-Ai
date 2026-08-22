@@ -29,6 +29,7 @@ SCRAPER_HEALTH_FILE = os.path.join(
             os.path.abspath(__file__)
         )
     ),
+    "member1\\supply-webshield",
     "data",
     "processed",
     "scraper health.json"

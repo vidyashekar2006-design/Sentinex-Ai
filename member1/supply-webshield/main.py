@@ -405,6 +405,54 @@ def main():
         print("✅ SCRAPER HEALTHY")
         print(f"Reason: {healing_reason}")    
 
+
+        # ==================================================
+    # SAVE SCRAPER HEALTH REPORT
+    # ==================================================
+
+    health_report = {
+        "status": "healing_required" if healing_needed else "healthy",
+        "reason": healing_reason,
+
+        "total_records": total_records,
+        "valid_records": len(unified_data),
+        "invalid_records": invalid_records,
+
+        "schema_warnings": schema_warning_count,
+        "duplicate_urls": len(duplicates),
+        "price_anomalies": len(price_anomalies),
+
+        "self_healing": {
+            "needed": healing_needed,
+            "reason": healing_reason
+        },
+
+        "sources": source_stats
+    }
+
+    health_file = (
+        PROCESSED_DIR /
+        "scraper_health.json"
+    )
+
+    with open(
+        health_file,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        json.dump(
+            health_report,
+            file,
+            indent=2,
+            ensure_ascii=False
+        )
+
+    print("\nScraper health report:")
+    print(health_file)
+     
+
+     
     # ==================================================
     # SAVE ANOMALY REPORT
     # ==================================================
