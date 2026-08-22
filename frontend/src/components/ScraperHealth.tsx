@@ -147,18 +147,20 @@ function ScraperHealth({ data }: Props) {
       ===================================================== */}
 
       <div
+        className="metric-grid"
         style={{
           display: "grid",
           gridTemplateColumns:
             "repeat(3, minmax(0, 1fr))",
           gap: "12px",
           marginTop: "20px",
+          marginBottom: 0,
         }}
       >
 
         {/* SUCCESS RATE */}
 
-        <div className="metric-card">
+        <div className="metric-card pipeline-metric">
 
           <TrendingUp size={18} />
 
@@ -175,7 +177,7 @@ function ScraperHealth({ data }: Props) {
 
         {/* RECORDS */}
 
-        <div className="metric-card">
+        <div className="metric-card pipeline-metric">
 
           <Database size={18} />
 
@@ -192,7 +194,7 @@ function ScraperHealth({ data }: Props) {
 
         {/* ANOMALIES */}
 
-        <div className="metric-card">
+        <div className="metric-card pipeline-metric">
 
           <AlertTriangle size={18} />
 
