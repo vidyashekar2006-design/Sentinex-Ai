@@ -539,6 +539,7 @@ def get_webshield():
 #
 # =========================================================
 
+
 @app.get("/api/scraper-health")
 def scraper_health():
 
@@ -568,6 +569,16 @@ def scraper_health():
 
             "self_healed": 0,
 
+            "self_healing": {
+                "status": "unavailable",
+                "source": None,
+                "reason": None,
+                "healing_started_at": None,
+                "repair_ready_at": None,
+                "healed_at": None,
+                "self_healed_count": 0
+            },
+
             "success_rate": 0,
 
             "total_records": 0,
@@ -590,7 +601,7 @@ def scraper_health():
             "error": str(error)
         }
 
-
+    
 # =========================================================
 # SCRAPER SOURCES
 # =========================================================
