@@ -544,7 +544,7 @@ def get_webshield():
 def scraper_health():
 
     try:
-        from services.scraper_service import get_scraper_health
+        from .services.scraper_service import get_scraper_health
 
         health = get_scraper_health()
 
@@ -584,7 +584,7 @@ def scraper_sources():
 
     try:
 
-        from services.scraper_service import (
+        from .services.scraper_service import (
             get_scraper_sources
         )
 
@@ -617,7 +617,7 @@ def scraper_summary():
 
     try:
 
-        from services.scraper_service import (
+        from .services.scraper_service import (
             get_scraper_summary
         )
 
@@ -666,7 +666,7 @@ def run_scraper():
 
     try:
 
-        from services.scraper_service import (
+        from .services.scraper_service import (
             run_scraper
         )
 
@@ -698,7 +698,7 @@ def self_heal(source_name: str):
 
     try:
 
-        from services.scraper_service import (
+        from .services.scraper_service import (
             self_heal_source
         )
 
@@ -1178,7 +1178,7 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "main:app",
+        "backend.main:app",
         host="127.0.0.1",
         port=8000,
         reload=True
