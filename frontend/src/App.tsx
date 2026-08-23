@@ -144,6 +144,16 @@ const API_BASE_URL =
 // =========================================================
 
 function App() {
+  const [showIntro, setShowIntro] = useState(true);
+
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setShowIntro(false);
+  }, 7000);
+
+  return () => clearTimeout(timer);
+}, []);
+
   const [sidebarOpen, setSidebarOpen] =
     useState(false);
 
@@ -1298,6 +1308,54 @@ self_healing:
       </>
     );
   };
+
+  // =======================================================
+  // INTRO SCREEN
+  // =======================================================
+  //
+  // This check is placed AFTER every hook in the component
+  // has already been called (all useState/useEffect/useCallback
+  // calls above run unconditionally on every render), so this
+  // early return is safe and will never cause a
+  // "Rendered more hooks than during the previous render" error.
+  //
+  // It is placed BEFORE the dashboard's `return`, so the
+  // dashboard shell (sidebar/topbar/content) does not render
+  // into the DOM at all while the intro is showing.
+  // =======================================================
+
+  if (showIntro) {
+    return (
+      <div className="sentinex-intro">
+        <video
+  className="sentinex-intro-video"
+  autoPlay
+  muted
+  playsInline
+  preload="auto"
+  onEnded={() => setShowIntro(false)}
+  onError={() => {
+    console.error("Intro video failed to load");
+    setShowIntro(false);
+  }}
+>
+  <source
+    src="/assets/animation.mp4"
+    type="video/mp4"
+  />
+  
+  Your browser does not support this video.
+</video>
+
+        <button
+          className="skip-intro"
+          onClick={() => setShowIntro(false)}
+        >
+          Skip Intro
+        </button>
+      </div>
+    );
+  }
 
   // =======================================================
   // RENDER
