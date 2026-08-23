@@ -454,50 +454,60 @@ export const BurstLogoScene: React.FC = () => {
           Using Remotion staticFile()
       ====================================================== */}
 
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          width: 700,
-          height: 450,
+<div
+  style={{
+    position: "absolute",
+    left: "50%",
+    top: "50%",
+    width: 700,
+    height: 450,
 
-          transform:
-            `translate(-50%, calc(-50% + ${logoY}px))
-             scale(${logoScale})`,
+    transform:
+      `translate(-50%, calc(-50% + ${logoY}px))
+       scale(${logoScale})`,
 
-          opacity: logoOpacity,
+    opacity: logoOpacity,
 
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
 
-          zIndex: 1000,
+    zIndex: 1000,
 
-          pointerEvents: "none",
-        }}
-      >
-        <img
-          src={staticFile("sentinex-ai.jpeg")}
-          alt="SentineX AI"
-          draggable={false}
-          style={{
-            width: 560,
-            height: "auto",
-            maxWidth: "90%",
-            maxHeight: "90%",
-            objectFit: "contain",
-            display: "block",
+    pointerEvents: "none",
+  }}
+>
+  <div
+    style={{
+      width: 560,
+      maxWidth: "90%",
+      maxHeight: "90%",
+      borderRadius: 40,
+      overflow: "hidden",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+  >
+    <img
+      src={staticFile("sentinex-ai.jpeg")}
+      alt="SentineX AI"
+      draggable={false}
+      style={{
+        width: "100%",
+        height: "auto",
+        objectFit: "contain",
+        display: "block",
 
-            filter: `
-              drop-shadow(0 0 10px rgba(120,235,255,1))
-              drop-shadow(0 0 25px rgba(30,170,255,0.95))
-              drop-shadow(0 0 55px rgba(15,110,255,0.8))
-            `,
-          }}
-        />
-      </div>
-
+        filter: `
+          drop-shadow(0 0 10px rgba(120,235,255,1))
+          drop-shadow(0 0 25px rgba(30,170,255,0.95))
+          drop-shadow(0 0 55px rgba(15,110,255,0.8))
+        `,
+      }}
+    />
+  </div>
+</div>
       {/* ======================================================
           FINAL LOGO ATMOSPHERE
       ====================================================== */}
