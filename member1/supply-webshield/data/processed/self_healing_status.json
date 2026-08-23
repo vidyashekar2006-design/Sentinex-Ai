@@ -1,0 +1,9 @@
+{
+  "status": "repair_ready",
+  "source": "Meesho",
+  "reason": "All scraper sources appear healthy.",
+  "healing_started_at": "2026-08-23T09:51:33.611872+00:00",
+  "repair_ready_at": "2026-08-23T09:53:59.435629+00:00",
+  "healed_at": null,
+  "self_healed_count": 0
+}
