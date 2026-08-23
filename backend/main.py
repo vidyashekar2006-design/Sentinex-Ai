@@ -544,10 +544,7 @@ def get_webshield():
 def scraper_health():
 
     try:
-
-        from services.scraper_service import (
-            get_scraper_health
-        )
+        from services.scraper_service import get_scraper_health
 
         health = get_scraper_health()
 
@@ -560,47 +557,23 @@ def scraper_health():
         )
 
         return {
-
             "total_sources": 0,
-
             "healthy": 0,
-
             "failed": 0,
-
             "self_healed": 0,
-
-            "self_healing": {
-                "status": "unavailable",
-                "source": None,
-                "reason": None,
-                "healing_started_at": None,
-                "repair_ready_at": None,
-                "healed_at": None,
-                "self_healed_count": 0
-            },
-
             "success_rate": 0,
-
             "total_records": 0,
-
             "valid_records": 0,
-
             "invalid_records": 0,
-
             "price_anomalies": 0,
-
             "last_run": None,
-
             "status": "unavailable",
-
-            "data_source":
-                "Member 1 Supply-WebShield pipeline",
-
+            "data_source": "Member 1 Supply-WebShield pipeline",
             "sources": [],
-
             "error": str(error)
         }
 
+    
     
 # =========================================================
 # SCRAPER SOURCES
@@ -611,7 +584,7 @@ def scraper_sources():
 
     try:
 
-        from backend.services.scraper_service import (
+        from services.scraper_service import (
             get_scraper_sources
         )
 
@@ -644,7 +617,7 @@ def scraper_summary():
 
     try:
 
-        from backend.services.scraper_service import (
+        from services.scraper_service import (
             get_scraper_summary
         )
 
@@ -693,7 +666,7 @@ def run_scraper():
 
     try:
 
-        from backend.services.scraper_service import (
+        from services.scraper_service import (
             run_scraper
         )
 
@@ -725,7 +698,7 @@ def self_heal(source_name: str):
 
     try:
 
-        from backend.services.scraper_service import (
+        from services.scraper_service import (
             self_heal_source
         )
 
@@ -1201,10 +1174,11 @@ async def startup_event():
 
 if __name__ == "__main__":
 
+    
     import uvicorn
 
     uvicorn.run(
-        "backend.main:app",
+        "main:app",
         host="127.0.0.1",
         port=8000,
         reload=True

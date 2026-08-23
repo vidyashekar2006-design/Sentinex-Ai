@@ -1,4 +1,4 @@
-from backend.models.supplier import Supplier
+from models.supplier import Supplier
 
 
 # ============================================================

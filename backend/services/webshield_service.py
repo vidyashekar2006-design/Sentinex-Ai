@@ -1,4 +1,4 @@
-from backend.models.webshield import WebShieldData
+from models.webshield import WebShieldData
 
 
 # ============================================================

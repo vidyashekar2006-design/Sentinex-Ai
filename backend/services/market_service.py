@@ -1,4 +1,4 @@
-from backend.models.market import MarketData
+from models.market import MarketData
 
 
 # ============================================================
