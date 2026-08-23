@@ -185,6 +185,60 @@ def load_self_healing_status() -> Dict:
 
     return data
 
+    # ============================================================
+# APPLY SELF-HEALING STATE TO SOURCE HEALTH
+# ============================================================
+
+def apply_self_healing_state(
+    sources: List[Dict],
+    self_healing_state: Dict
+) -> List[Dict]:
+
+    healing_status = str(
+        self_healing_state.get(
+            "status",
+            "idle"
+        )
+    ).lower()
+
+    affected_source = self_healing_state.get(
+        "source"
+    )
+
+    if not affected_source:
+        return sources
+
+    for source in sources:
+
+        if (
+            source["name"].lower()
+            ==
+            str(affected_source).lower()
+        ):
+
+            # ------------------------------------------------
+            # FAILURE / HEALING IN PROGRESS
+            # ------------------------------------------------
+
+            if healing_status in [
+                "failed",
+                "failure",
+                "healing",
+                "repairing"
+            ]:
+
+                source["status"] = "failed"
+
+            # ------------------------------------------------
+            # HEALED
+            # ------------------------------------------------
+
+            elif healing_status == "healed":
+
+                source["status"] = "healthy"
+
+    return sources
+
 
 # ============================================================
 # COUNT SOURCE RECORDS
@@ -385,11 +439,58 @@ def get_scraper_sources() -> List[Dict]:
 
 # ============================================================
 # CALCULATE HEALTH
-# ============================================================
-
+# =========================================================
 def get_scraper_health() -> Dict:
 
     sources = get_scraper_sources()
+
+    # -----------------------------------------------------
+    # LOAD REAL SELF-HEALING STATE
+    # -----------------------------------------------------
+
+    self_healing_state = load_self_healing_status()
+
+    healing_status = self_healing_state.get(
+        "status",
+        "idle"
+    )
+
+    healing_source = self_healing_state.get(
+        "source"
+    )
+
+    # -----------------------------------------------------
+    # APPLY FAILURE / HEALING STATE TO SOURCE
+    # -----------------------------------------------------
+    #
+    # Member 1 self-healing controller writes the current
+    # pipeline state to self_healing_status.json.
+    #
+    # When a source is detected as failed or is currently
+    # being repaired, expose that state to the dashboard.
+    # -----------------------------------------------------
+
+    if (
+        healing_source
+        and healing_status in [
+            "failed",
+            "healing",
+            "repair_ready"
+        ]
+    ):
+
+        for source in sources:
+
+            if (
+                source["name"].lower()
+                == healing_source.lower()
+            ):
+
+                source["status"] = "failed"
+
+    # -----------------------------------------------------
+    # CALCULATE SOURCE COUNTS
+    # -----------------------------------------------------
 
     total_sources = len(sources)
 
@@ -425,7 +526,9 @@ def get_scraper_health() -> Dict:
         for source in sources
     )
 
-    # Successful record percentage
+    # -----------------------------------------------------
+    # SUCCESSFUL RECORD PERCENTAGE
+    # -----------------------------------------------------
 
     if total_records > 0:
 
@@ -441,6 +544,10 @@ def get_scraper_health() -> Dict:
 
         success_rate = 0.0
 
+    # -----------------------------------------------------
+    # OVERALL SYSTEM STATUS
+    # -----------------------------------------------------
+
     if failed == 0 and total_sources > 0:
 
         overall_status = "healthy"
@@ -453,6 +560,7 @@ def get_scraper_health() -> Dict:
 
         overall_status = "failed"
 
+        
     # -----------------------------------------------------
 # REAL SELF-HEALING STATE
 # -----------------------------------------------------
@@ -507,7 +615,7 @@ def get_scraper_health() -> Dict:
     )
 },
 
-        "success_rate": success_rate,
+         "success_rate": success_rate,
 
         "total_records": total_records,
 

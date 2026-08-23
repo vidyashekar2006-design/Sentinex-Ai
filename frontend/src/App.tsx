@@ -488,10 +488,15 @@ self_healing:
   // =======================================================
   // INITIAL LOAD
   // =======================================================
+     useEffect(() => {
+  fetchDashboardData();
 
-  useEffect(() => {
+  const interval = setInterval(() => {
     fetchDashboardData();
-  }, [fetchDashboardData]);
+  }, 3000);
+
+  return () => clearInterval(interval);
+}, [fetchDashboardData]);
 
   // =======================================================
   // NAVIGATION

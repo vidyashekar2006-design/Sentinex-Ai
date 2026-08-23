@@ -544,7 +544,7 @@ def scraper_health():
 
     try:
 
-        from backend.services.scraper_service import (
+        from services.scraper_service import (
             get_scraper_health
         )
 
