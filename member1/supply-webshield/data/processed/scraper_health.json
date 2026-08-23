@@ -1,6 +1,6 @@
 {
   "status": "healing_required",
-  "reason": "All scraper sources appear healthy.",
+  "reason": "37.5% of records are invalid.",
   "total_records": 305,
   "valid_records": 288,
   "invalid_records": 17,
@@ -9,7 +9,7 @@
   "price_anomalies": 54,
   "self_healing": {
     "needed": true,
-    "reason": "All scraper sources appear healthy.",
+    "reason": "37.5% of records are invalid.",
     "status": "repair_ready",
     "source": "Meesho",
     "healing_started_at": "2026-08-23T09:51:33.611872+00:00",

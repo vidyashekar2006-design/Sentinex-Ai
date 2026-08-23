@@ -1,5 +1,5 @@
 {
-  "status": "repair_ready",
+  "status": "repair_requested",
   "source": "Meesho",
   "reason": "All scraper sources appear healthy.",
   "healing_started_at": "2026-08-23T09:51:33.611872+00:00",

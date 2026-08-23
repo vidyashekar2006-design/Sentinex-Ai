@@ -63,7 +63,12 @@ def get_records(data):
     if isinstance(data, dict):
 
         # Common container names
-        for key in ["data", "results", "records", "items"]:
+        for key in [
+            "data",
+            "results",
+            "records",
+            "items"
+        ]:
 
             if isinstance(data.get(key), list):
                 return data[key]
@@ -209,7 +214,6 @@ def main():
 
             # Ignore non-dictionary records
             if not isinstance(record, dict):
-
                 continue
 
             # ----------------------------------------------
@@ -235,7 +239,10 @@ def main():
 
             if schema_issues:
 
-                source_stats[source]["schema_warnings"] += 1
+                source_stats[source][
+                    "schema_warnings"
+                ] += 1
+
                 total_schema_warnings += 1
 
                 print("\n⚠️ SCHEMA WARNING")
@@ -263,7 +270,9 @@ def main():
                     normalized
                 )
 
-                source_stats[source]["valid"] += 1
+                source_stats[source][
+                    "valid"
+                ] += 1
 
             # ----------------------------------------------
             # INVALID RECORD
@@ -276,7 +285,9 @@ def main():
                     "issues": issues
                 })
 
-                source_stats[source]["invalid"] += 1
+                source_stats[source][
+                    "invalid"
+                ] += 1
 
                 print("\n⚠️ INVALID RECORD")
 
@@ -319,7 +330,9 @@ def main():
 
     else:
 
-        print("Duplicate URLs found: 0")
+        print(
+            "Duplicate URLs found: 0"
+        )
 
     # ==================================================
     # PRICE ANOMALY DETECTION
@@ -368,236 +381,374 @@ def main():
             f"{anomaly.get('reason')}"
         )
 
-        # ==================================================
-# SELF-HEALING DECISION
-# ==================================================
+    # ==================================================
+    # SELF-HEALING DECISION
+    # ==================================================
 
     print("\n")
     print("=" * 60)
     print("SELF-HEALING CHECK")
     print("=" * 60)
 
-# Check every scraper independently.
-# A failure in one source should not be hidden
-# by healthy records from other sources.
+    # Check every scraper independently.
+    # A failure in one source should not be hidden
+    # by healthy records from other sources.
 
     source_healing_results = {}
 
     for source, stats in source_stats.items():
 
         source_total = stats["total"]
-        source_invalid = stats["invalid"]
-        source_schema_warnings = stats["schema_warnings"]
 
-        source_healing_needed, source_healing_reason = (
-            should_trigger_healing(
+        source_invalid = stats["invalid"]
+
+        source_schema_warnings = (
+            stats["schema_warnings"]
+        )
+
+        (
+            source_healing_needed,
+            source_healing_reason
+        ) = should_trigger_healing(
+
             source_total,
             source_invalid,
             source_schema_warnings,
             0
         )
-    )
 
         source_healing_results[source] = {
-        "needed": source_healing_needed,
-        "reason": source_healing_reason,
-        "total_records": source_total,
-        "invalid_records": source_invalid,
-        "schema_warnings": source_schema_warnings
-    }
+
+            "needed": source_healing_needed,
+
+            "reason": source_healing_reason,
+
+            "total_records": source_total,
+
+            "invalid_records": source_invalid,
+
+            "schema_warnings":
+                source_schema_warnings
+        }
 
         print(f"\nSource: {source}")
+
         print(
-        f"Total records: {source_total}"
-    )
+            f"Total records: "
+            f"{source_total}"
+        )
+
         print(
-        f"Invalid records: {source_invalid}"
-    )
+            f"Invalid records: "
+            f"{source_invalid}"
+        )
 
         if source_healing_needed:
 
-            print("⚠️ HEALING REQUIRED")
             print(
-            f"Reason: {source_healing_reason}"
-        )
+                "⚠️ HEALING REQUIRED"
+            )
+
+            print(
+                f"Reason: "
+                f"{source_healing_reason}"
+            )
 
         else:
 
-            print("✅ HEALTHY")
             print(
-            f"Reason: {source_healing_reason}"
-        )
+                "✅ HEALTHY"
+            )
 
+            print(
+                f"Reason: "
+                f"{source_healing_reason}"
+            )
 
-# Find sources that require healing
+    # ==================================================
+    # FIND FAILED SOURCES
+    # ==================================================
 
     failed_sources = [
+
         source
+
         for source, result
         in source_healing_results.items()
+
         if result["needed"]
-]
+    ]
 
+    # ==================================================
+    # OVERALL PIPELINE DECISION
+    # ==================================================
 
-# Overall pipeline decision
-
-    healing_needed = len(failed_sources) > 0
+    healing_needed = (
+        len(failed_sources) > 0
+    )
 
     if healing_needed:
 
-        failed_source = failed_sources[0]
+        failed_source = (
+            failed_sources[0]
+        )
 
         healing_reason = (
             source_healing_results[
-            failed_source
-        ]["reason"]
-    )
+                failed_source
+            ]["reason"]
+        )
 
     else:
 
         failed_source = None
 
-    healing_reason = (
-        "All scraper sources appear healthy."
-    )
+        healing_reason = (
+            "All scraper sources appear healthy."
+        )
 
-
-# Overall statistics are still preserved
-# for the scraper health report.
+    # ==================================================
+    # OVERALL STATISTICS
+    # ==================================================
 
     total_records = sum(
-    stats["total"]
-    for stats in source_stats.values()
-)
+
+        stats["total"]
+
+        for stats
+        in source_stats.values()
+    )
 
     invalid_records = sum(
-    stats["invalid"]
-    for stats in source_stats.values()
-)
+
+        stats["invalid"]
+
+        for stats
+        in source_stats.values()
+    )
 
     schema_warning_count = sum(
-    stats["schema_warnings"]
-    for stats in source_stats.values()
-)
+
+        stats["schema_warnings"]
+
+        for stats
+        in source_stats.values()
+    )
+
     # ==================================================
-# SELF-HEALING STATE
-# ==================================================
+    # SELF-HEALING STATE
+    # ==================================================
 
     if healing_needed:
 
         print("\n⚠️ SELF-HEALING REQUIRED")
-        print(f"Failed source: {failed_source}")
-        print(f"Reason: {healing_reason}")
 
-    # Load existing healing state before creating
-    # another Bright Data repair request.
+        print(
+            f"Failed source: "
+            f"{failed_source}"
+        )
+
+        print(
+            f"Reason: "
+            f"{healing_reason}"
+        )
+
+        # Load existing healing state before creating
+        # another Bright Data repair request.
+
         existing_state = load_state()
 
-    # If healing is already in progress, do not
-    # trigger Bright Data repeatedly.
+        # If healing is already active, do not trigger
+        # Bright Data repeatedly.
+
         active_healing_states = [
-        "healing_required",
-        "repair_requested",
-        "repair_ready"
-    ]
 
-        if existing_state.get("status") in active_healing_states:
+            "healing_required",
+
+            "repair_requested",
+
+            "repair_ready",
+
+            "healing",
+
+            "repairing"
+        ]
+
+        if (
+            existing_state.get("status")
+            in active_healing_states
+        ):
 
             print(
-            "\nSelf-healing workflow already active."
-        )
+                "\nSelf-healing workflow "
+                "already active."
+            )
 
             print(
-            f"Current status: "
-            f"{existing_state.get('status')}"
-        )
+                f"Current status: "
+                f"{existing_state.get('status')}"
+            )
 
             healing_state = existing_state
 
         else:
 
-        # Record that healing is required.
-            healing_state = mark_healing_required(
-            reason=healing_reason,
-            source=failed_source
-        )
+            # Record that healing is required.
 
-            print("\nSelf-healing state recorded.")
+            healing_state = (
+                mark_healing_required(
+
+                    reason=healing_reason,
+
+                    source=failed_source
+                )
+            )
 
             print(
-            "Starting Bright Data "
-            "self-healing workflow..."
-        )
+                "\nSelf-healing state recorded."
+            )
 
-        # Trigger the real Bright Data
-        # self-healing controller.
+            print(
+                "Starting Bright Data "
+                "self-healing workflow..."
+            )
+
+            # Trigger the real Bright Data
+            # self-healing controller.
+
             result = call_self_healing(
-            healing_reason
-        )
+                healing_reason
+            )
 
-        # Reload state because the controller may
-        # have updated it to repair_requested or
-        # repair_ready.
+            # Reload state because controller may
+            # have updated it.
+
             healing_state = load_state()
 
-            print("\nSelf-healing trigger result:")
+            print(
+                "\nSelf-healing trigger result:"
+            )
+
             print(result)
 
     else:
 
         print("\n✅ SCRAPER HEALTHY")
-        print(f"Reason: {healing_reason}")
+
+        print(
+            f"Reason: {healing_reason}"
+        )
 
         existing_state = load_state()
 
-    # Preserve a successful healing state so the
-    # dashboard can show that recovery occurred.
-        if existing_state.get("status") == "healed":
+        # Preserve successful healing state.
+
+        if (
+            existing_state.get("status")
+            == "healed"
+        ):
 
             healing_state = existing_state
 
         else:
 
-            healing_state = reset_to_idle()
+            healing_state = (
+                reset_to_idle()
+            )
 
+    # ==================================================
+    # DISPLAY SELF-HEALING STATE
+    # ==================================================
 
     print("\nSelf-healing state:")
 
     print(
-    json.dumps(
-        healing_state,
-        indent=2,
-        ensure_ascii=False
+
+        json.dumps(
+
+            healing_state,
+
+            indent=2,
+
+            ensure_ascii=False
+        )
     )
-)
-        # ==================================================
+
+    # ==================================================
     # SAVE SCRAPER HEALTH REPORT
     # ==================================================
 
     health_report = {
-        "status": "healing_required" if healing_needed else "healthy",
+
+        "status":
+            (
+                "healing_required"
+                if healing_needed
+                else "healthy"
+            ),
+
         "reason": healing_reason,
 
         "total_records": total_records,
-        "valid_records": len(unified_data),
-        "invalid_records": invalid_records,
 
-        "schema_warnings": schema_warning_count,
-        "duplicate_urls": len(duplicates),
-        "price_anomalies": len(price_anomalies),
+        "valid_records":
+            len(unified_data),
+
+        "invalid_records":
+            invalid_records,
+
+        "schema_warnings":
+            schema_warning_count,
+
+        "duplicate_urls":
+            len(duplicates),
+
+        "price_anomalies":
+            len(price_anomalies),
 
         "self_healing": {
-    "needed": healing_needed,
-    "reason": healing_reason,
-    "status": healing_state["status"],
-    "source": healing_state["source"],
-    "healing_started_at": healing_state["healing_started_at"],
-    "repair_ready_at": healing_state["repair_ready_at"],
-    "healed_at": healing_state["healed_at"],
-    "self_healed_count": healing_state["self_healed_count"]
-},
 
-        "sources": source_stats
+            "needed":
+                healing_needed,
+
+            "reason":
+                healing_reason,
+
+            "status":
+                healing_state.get(
+                    "status",
+                    "idle"
+                ),
+
+            "source":
+                healing_state.get(
+                    "source"
+                ),
+
+            "healing_started_at":
+                healing_state.get(
+                    "healing_started_at"
+                ),
+
+            "repair_ready_at":
+                healing_state.get(
+                    "repair_ready_at"
+                ),
+
+            "healed_at":
+                healing_state.get(
+                    "healed_at"
+                ),
+
+            "self_healed_count":
+                healing_state.get(
+                    "self_healed_count",
+                    0
+                )
+        },
+
+        "sources":
+            source_stats
     }
 
     health_file = (
@@ -612,17 +763,22 @@ def main():
     ) as file:
 
         json.dump(
+
             health_report,
+
             file,
+
             indent=2,
+
             ensure_ascii=False
         )
 
-    print("\nScraper health report:")
-    print(health_file)
-     
+    print(
+        "\nScraper health report:"
+    )
 
-     
+    print(health_file)
+
     # ==================================================
     # SAVE ANOMALY REPORT
     # ==================================================
@@ -639,9 +795,13 @@ def main():
     ) as file:
 
         json.dump(
+
             price_anomalies,
+
             file,
+
             indent=2,
+
             ensure_ascii=False
         )
 
@@ -656,7 +816,9 @@ def main():
     # ==================================================
 
     output_file = (
+
         PROCESSED_DIR /
+
         "unified_supply_data.json"
     )
 
@@ -667,9 +829,13 @@ def main():
     ) as file:
 
         json.dump(
+
             unified_data,
+
             file,
+
             indent=2,
+
             ensure_ascii=False
         )
 
@@ -678,7 +844,9 @@ def main():
     # ==================================================
 
     rejected_file = (
+
         REJECTED_DIR /
+
         "invalid_records.json"
     )
 
@@ -689,9 +857,13 @@ def main():
     ) as file:
 
         json.dump(
+
             rejected_data,
+
             file,
+
             indent=2,
+
             ensure_ascii=False
         )
 
