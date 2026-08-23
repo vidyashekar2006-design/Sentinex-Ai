@@ -1,19 +1,19 @@
 {
-  "status": "healing_required",
-  "reason": "37.5% of records are invalid.",
+  "status": "healthy",
+  "reason": "All scraper sources appear healthy.",
   "total_records": 305,
-  "valid_records": 288,
-  "invalid_records": 17,
+  "valid_records": 303,
+  "invalid_records": 2,
   "schema_warnings": 0,
   "duplicate_urls": 0,
   "price_anomalies": 54,
   "self_healing": {
-    "needed": true,
-    "reason": "37.5% of records are invalid.",
-    "status": "repair_ready",
-    "source": "Meesho",
-    "healing_started_at": "2026-08-23T09:51:33.611872+00:00",
-    "repair_ready_at": "2026-08-23T09:53:59.435629+00:00",
+    "needed": false,
+    "reason": "All scraper sources appear healthy.",
+    "status": "idle",
+    "source": null,
+    "healing_started_at": null,
+    "repair_ready_at": null,
     "healed_at": null,
     "self_healed_count": 0
   },
@@ -32,8 +32,8 @@
     },
     "Meesho": {
       "total": 40,
-      "valid": 25,
-      "invalid": 15,
+      "valid": 40,
+      "invalid": 0,
       "schema_warnings": 0
     }
   }
