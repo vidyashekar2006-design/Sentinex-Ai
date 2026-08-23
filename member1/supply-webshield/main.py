@@ -369,62 +369,125 @@ def main():
         )
 
         # ==================================================
-    # SELF-HEALING DECISION
-    # ==================================================
-
-    total_records = sum(
-        stats["total"]
-        for stats in source_stats.values()
-    )
-
-    invalid_records = sum(
-        stats["invalid"]
-        for stats in source_stats.values()
-    )
-
-    schema_warning_count = sum(
-        stats["schema_warnings"]
-        for stats in source_stats.values()
-    )
-
-    healing_needed, healing_reason = should_trigger_healing(
-        total_records,
-        invalid_records,
-        schema_warning_count,
-        len(price_anomalies)
-    )
+# SELF-HEALING DECISION
+# ==================================================
 
     print("\n")
     print("=" * 60)
     print("SELF-HEALING CHECK")
     print("=" * 60)
 
+# Check every scraper independently.
+# A failure in one source should not be hidden
+# by healthy records from other sources.
 
+    source_healing_results = {}
+
+    for source, stats in source_stats.items():
+
+        source_total = stats["total"]
+        source_invalid = stats["invalid"]
+        source_schema_warnings = stats["schema_warnings"]
+
+        source_healing_needed, source_healing_reason = (
+            should_trigger_healing(
+            source_total,
+            source_invalid,
+            source_schema_warnings,
+            0
+        )
+    )
+
+        source_healing_results[source] = {
+        "needed": source_healing_needed,
+        "reason": source_healing_reason,
+        "total_records": source_total,
+        "invalid_records": source_invalid,
+        "schema_warnings": source_schema_warnings
+    }
+
+        print(f"\nSource: {source}")
+        print(
+        f"Total records: {source_total}"
+    )
+        print(
+        f"Invalid records: {source_invalid}"
+    )
+
+        if source_healing_needed:
+
+            print("⚠️ HEALING REQUIRED")
+            print(
+            f"Reason: {source_healing_reason}"
+        )
+
+        else:
+
+            print("✅ HEALTHY")
+            print(
+            f"Reason: {source_healing_reason}"
+        )
+
+
+# Find sources that require healing
+
+    failed_sources = [
+        source
+        for source, result
+        in source_healing_results.items()
+        if result["needed"]
+]
+
+
+# Overall pipeline decision
+
+    healing_needed = len(failed_sources) > 0
+
+    if healing_needed:
+
+        failed_source = failed_sources[0]
+
+        healing_reason = (
+            source_healing_results[
+            failed_source
+        ]["reason"]
+    )
+
+    else:
+
+        failed_source = None
+
+    healing_reason = (
+        "All scraper sources appear healthy."
+    )
+
+
+# Overall statistics are still preserved
+# for the scraper health report.
+
+    total_records = sum(
+    stats["total"]
+    for stats in source_stats.values()
+)
+
+    invalid_records = sum(
+    stats["invalid"]
+    for stats in source_stats.values()
+)
+
+    schema_warning_count = sum(
+    stats["schema_warnings"]
+    for stats in source_stats.values()
+)
     # ==================================================
 # SELF-HEALING STATE
 # ==================================================
 
     if healing_needed:
 
-       print("\n⚠️ SELF-HEALING REQUIRED")
-       print(f"Reason: {healing_reason}")
-
-    # Try to identify which source is causing
-    # the highest number of validation/schema issues.
-       failed_source = None
-       highest_issues = 0
-
-       for source_name, stats in source_stats.items():
-
-        issue_count = (
-            stats["invalid"]
-            + stats["schema_warnings"]
-        )
-
-        if issue_count > highest_issues:
-
-            highest_issues = issue_count
-            failed_source = source_name
+        print("\n⚠️ SELF-HEALING REQUIRED")
+        print(f"Failed source: {failed_source}")
+        print(f"Reason: {healing_reason}")
 
     # Load existing healing state before creating
     # another Bright Data repair request.
@@ -438,67 +501,64 @@ def main():
         "repair_ready"
     ]
 
-        if (
-        existing_state.get("status")
-        in active_healing_states
-    ):
+        if existing_state.get("status") in active_healing_states:
 
-         print(
+            print(
             "\nSelf-healing workflow already active."
         )
 
-         print(
+            print(
             f"Current status: "
             f"{existing_state.get('status')}"
         )
 
-         healing_state = existing_state
+            healing_state = existing_state
 
         else:
 
         # Record that healing is required.
-         healing_state = mark_healing_required(
+            healing_state = mark_healing_required(
             reason=healing_reason,
             source=failed_source
         )
 
-         print("\nSelf-healing state recorded.")
+            print("\nSelf-healing state recorded.")
 
-         print(
+            print(
             "Starting Bright Data "
             "self-healing workflow..."
         )
 
         # Trigger the real Bright Data
         # self-healing controller.
-         result = call_self_healing(
+            result = call_self_healing(
             healing_reason
         )
 
         # Reload state because the controller may
         # have updated it to repair_requested or
         # repair_ready.
-        healing_state = load_state()
+            healing_state = load_state()
 
-        print("\nSelf-healing trigger result:")
-        print(result)
+            print("\nSelf-healing trigger result:")
+            print(result)
 
     else:
 
-     print("\n✅ SCRAPER HEALTHY")
-     print(f"Reason: {healing_reason}")
+        print("\n✅ SCRAPER HEALTHY")
+        print(f"Reason: {healing_reason}")
 
-     existing_state = load_state()
+        existing_state = load_state()
 
     # Preserve a successful healing state so the
     # dashboard can show that recovery occurred.
-     if existing_state.get("status") == "healed":
+        if existing_state.get("status") == "healed":
 
-         healing_state = existing_state
+            healing_state = existing_state
 
-     else:
+        else:
 
-         healing_state = reset_to_idle()
+            healing_state = reset_to_idle()
 
 
     print("\nSelf-healing state:")
