@@ -9,7 +9,13 @@
   "price_anomalies": 54,
   "self_healing": {
     "needed": false,
-    "reason": "Scraper appears healthy."
+    "reason": "Scraper appears healthy.",
+    "status": "idle",
+    "source": null,
+    "healing_started_at": null,
+    "repair_ready_at": null,
+    "healed_at": null,
+    "self_healed_count": 0
   },
   "sources": {
     "DeoDap": {

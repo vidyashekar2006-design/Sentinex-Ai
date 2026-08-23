@@ -400,40 +400,108 @@ def main():
     print("=" * 60)
 
 
-        # ==================================================
+    # ==================================================
 # SELF-HEALING STATE
 # ==================================================
 
     if healing_needed:
 
-        print("\n⚠️ SELF-HEALING RECOMMENDED")
-        print(f"Reason: {healing_reason}")
+       print("\n⚠️ SELF-HEALING REQUIRED")
+       print(f"Reason: {healing_reason}")
 
-        healing_state= mark_healing_required(
-        reason=healing_reason
-    )
+    # Try to identify which source is causing
+    # the highest number of validation/schema issues.
+       failed_source = None
+       highest_issues = 0
+
+       for source_name, stats in source_stats.items():
+
+        issue_count = (
+            stats["invalid"]
+            + stats["schema_warnings"]
+        )
+
+        if issue_count > highest_issues:
+
+            highest_issues = issue_count
+            failed_source = source_name
+
+    # Load existing healing state before creating
+    # another Bright Data repair request.
+        existing_state = load_state()
+
+    # If healing is already in progress, do not
+    # trigger Bright Data repeatedly.
+        active_healing_states = [
+        "healing_required",
+        "repair_requested",
+        "repair_ready"
+    ]
+
+        if (
+        existing_state.get("status")
+        in active_healing_states
+    ):
+
+         print(
+            "\nSelf-healing workflow already active."
+        )
+
+         print(
+            f"Current status: "
+            f"{existing_state.get('status')}"
+        )
+
+         healing_state = existing_state
+
+        else:
+
+        # Record that healing is required.
+         healing_state = mark_healing_required(
+            reason=healing_reason,
+            source=failed_source
+        )
+
+         print("\nSelf-healing state recorded.")
+
+         print(
+            "Starting Bright Data "
+            "self-healing workflow..."
+        )
+
+        # Trigger the real Bright Data
+        # self-healing controller.
+         result = call_self_healing(
+            healing_reason
+        )
+
+        # Reload state because the controller may
+        # have updated it to repair_requested or
+        # repair_ready.
+        healing_state = load_state()
+
+        print("\nSelf-healing trigger result:")
+        print(result)
 
     else:
 
-      print("\n✅ SCRAPER HEALTHY")
-      print(f"Reason: {healing_reason}")
+     print("\n✅ SCRAPER HEALTHY")
+     print(f"Reason: {healing_reason}")
 
-      existing_state = load_state()
+     existing_state = load_state()
 
-    # Preserve a real healing history.
-    # A normal healthy run must NOT erase a
-    # previously recorded successful healing.
-    if existing_state.get("status") == "healed":
+    # Preserve a successful healing state so the
+    # dashboard can show that recovery occurred.
+     if existing_state.get("status") == "healed":
 
-        healing_state = existing_state
+         healing_state = existing_state
 
-    else:
+     else:
 
-        healing_state = reset_to_idle()
+         healing_state = reset_to_idle()
 
-    print(
-    "\nSelf-healing state:"
-)
+
+    print("\nSelf-healing state:")
 
     print(
     json.dumps(
@@ -442,7 +510,6 @@ def main():
         ensure_ascii=False
     )
 )
-
         # ==================================================
     # SAVE SCRAPER HEALTH REPORT
     # ==================================================

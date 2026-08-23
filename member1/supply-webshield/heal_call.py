@@ -1,5 +1,4 @@
-import subprocess
-import sys
+from self_heal_controller import run_self_healing
 
 
 def call_self_healing(reason):
@@ -8,20 +7,24 @@ def call_self_healing(reason):
     print("=" * 60)
 
     print(f"Reason: {reason}")
-    print("\nStarting self-healing controller...")
+    print("\nStarting Bright Data self-healing workflow...")
 
-    result = subprocess.run(
-        [sys.executable, "self_heal_controller.py"],
-        check=False
-    )
+    try:
+        result = run_self_healing(reason)
 
-    if result.returncode == 0:
-        print("\nSelf-healing controller completed successfully.")
-    else:
+        print("\nSelf-healing workflow completed.")
+
+        return result
+
+    except Exception as error:
+
         print(
-            f"\nSelf-healing controller exited "
-            f"with code: {result.returncode}"
+            "\nSelf-healing workflow failed:"
         )
+
+        print(error)
+
+        return False
 
 
 if __name__ == "__main__":
@@ -31,7 +34,11 @@ if __name__ == "__main__":
     ).strip()
 
     if not reason:
-        print("No healing reason supplied.")
-        sys.exit(1)
 
-    call_self_healing(reason)
+        print(
+            "No healing reason supplied."
+        )
+
+    else:
+
+        call_self_healing(reason)
